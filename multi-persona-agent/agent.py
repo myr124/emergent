@@ -28,14 +28,18 @@ class PersonaDetailedSchema(BaseModel):
 sub_agents: List[LlmAgent] = []
 
 
-# Embedded archetype definitions (faster than loading from JSON)
-ARCHETYPE_COUNTS = {
-    "lowincome": 15,
-    "middleclass": 12,
-    "retired": 10,
-    "underemployed": 8,
-    "highincome": 3,
-    "student": 2,
+# Total number of agents to generate
+TOTAL_AGENTS = 20
+
+# Archetype proportions (percentages as decimals: 0.30 = 30%, 0.05 = 5%)
+# Note: These should sum to approximately 1.0 (100%)
+ARCHETYPE_PROPORTIONS = {
+    "lowincome": 0.30,       # 30% of population
+    "middleclass": 0.24,     # 24% of population
+    "retired": 0.20,         # 20% of population
+    "underemployed": 0.16,   # 16% of population
+    "highincome": 0.06,      # 6% of population
+    "student": 0.04,         # 4% of population
 }
 
 # Archetype descriptions
@@ -52,9 +56,30 @@ ARCHETYPE_DESCRIPTIONS = {
 _archetype_template = load_instructions("prompts/archetype_template.txt")
 _emergency_phases = load_text("prompts/emergency_plan.txt")
 
-# Generate agents based on archetype counts (deterministic distribution)
+# Calculate actual counts from proportions
+archetype_counts = {}
+agents_allocated = 0
+
+# First pass: calculate counts using floor
+for archetype, proportion in ARCHETYPE_PROPORTIONS.items():
+    count = int(TOTAL_AGENTS * proportion)
+    archetype_counts[archetype] = count
+    agents_allocated += count
+
+# Second pass: distribute remaining agents to archetypes with largest remainders
+remaining = TOTAL_AGENTS - agents_allocated
+if remaining > 0:
+    remainders = [(archetype, (TOTAL_AGENTS * proportion) - archetype_counts[archetype])
+                  for archetype, proportion in ARCHETYPE_PROPORTIONS.items()]
+    remainders.sort(key=lambda x: x[1], reverse=True)
+
+    for i in range(remaining):
+        archetype = remainders[i][0]
+        archetype_counts[archetype] += 1
+
+# Generate agents based on calculated archetype counts
 agent_counter = 0
-for archetype, count in ARCHETYPE_COUNTS.items():
+for archetype, count in archetype_counts.items():
     arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
     instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc).replace("{EMERGENCY_PHASES}", _emergency_phases)
 
@@ -71,8 +96,9 @@ for archetype, count in ARCHETYPE_COUNTS.items():
         )
         sub_agents.append(agent)
 
-# Total agents: sum of all archetype counts (50 personas)
-print(f"Generated {agent_counter} persona agents")
+# Total agents: sum of all archetype counts
+print(f"Generated {agent_counter} persona agents from {TOTAL_AGENTS} requested")
+print(f"Distribution: {archetype_counts}")
 
 
 # Single ParallelAgent for all personas (FASTER than waves)
