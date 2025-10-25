@@ -35,6 +35,7 @@ personality_archetypes = load_archetypes()
 # Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
 _archetype_template = load_instructions("prompts/archetype_template.txt")
 _emergency_phases = load_text("prompts/emergency_plan.txt")
+_archetype_generation_prompt = load_text("prompts/archetype_generation_prompt.txt")
 
 for archetype in personality_archetypes:
     arche_desc = personality_archetypes[archetype]
