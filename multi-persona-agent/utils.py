@@ -118,3 +118,26 @@ def format_phases_for_prompt() -> str:
                 formatted.append(f"  - {action.get('actionType')}: {action.get('details')}")
 
     return "\n".join(formatted)
+
+
+def load_archetypes() -> Dict[str, str]:
+    """
+    Load personality archetypes from the archetypes.json file.
+
+    Returns:
+    - Dictionary mapping archetype names to their descriptions
+
+    Raises:
+    - FileNotFoundError if archetypes.json does not exist.
+    - json.JSONDecodeError if the file is not valid JSON.
+    """
+    base_dir = os.path.dirname(__file__)
+    archetypes_path = os.path.normpath(os.path.join(base_dir, "prompts", "archetypes.json"))
+
+    if not os.path.exists(archetypes_path):
+        raise FileNotFoundError(f"Archetypes file not found: {archetypes_path}")
+
+    with open(archetypes_path, "r", encoding="utf-8") as f:
+        archetypes = json.load(f)
+
+    return archetypes

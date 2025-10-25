@@ -2,7 +2,7 @@ from pydantic import Field
 from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
 from pydantic import BaseModel
 from typing import List, Dict, Literal
-from .utils import load_instructions, format_phases_for_prompt, load_text
+from .utils import load_instructions, format_phases_for_prompt, load_text, load_archetypes
 
 
 # Steps
@@ -23,24 +23,18 @@ class PersonaDetailedSchema(BaseModel):
     sex: str
     bio: str = Field(description="Detailed biography including occupation, family, housing, resources")
     representation: float = Field(description="Estimated % of population this persona represents (0-100)")
-    response: Dict[str, PhaseResponse] = Field(description="Keyed by phase names like 'phase_1', 'phase_2', etc.")
+    response: List[PhaseResponse] = Field(description="Array of phase responses in chronological order (index 0 = phase 1, index 1 = phase 2, etc.)")
 
 
 sub_agents: List[LlmAgent] = []
 
 
-personality_archetypes = {
-    "lowincome": "low-income, high risk, socially connected",
-    "middleclass": "middle-class, low risk, socially average",
-    "retired": "retired, high risk, socially limited",
-    "underemployed": "under-employed, medium risk, socially connected",
-    "highincome": "high-income, medium risk, socially active",
-    "student": "student, low risk, socially connected",
-}
+# Load personality archetypes from external JSON file
+personality_archetypes = load_archetypes()
 
 # Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
-_archetype_template = load_instructions("instructions/archetype_template.txt")
-_emergency_phases = load_text("instructions/emergency_plan.txt")
+_archetype_template = load_instructions("prompts/archetype_template.txt")
+_emergency_phases = load_text("prompts/emergency_plan.txt")
 
 for archetype in personality_archetypes:
     arche_desc = personality_archetypes[archetype]
@@ -93,7 +87,7 @@ class outputSchema(BaseModel):
 merger_agent = LlmAgent(
     name="merger_agent",
     model="gemini-2.5-flash-lite",
-    instruction=load_instructions("instructions/summarizer_instructions.txt"),
+    instruction=load_instructions("prompts/summarizer_instructions.txt"),
     description="Summarizes the entire sentiment of all population subsets",
     output_schema=outputSchema,
     output_key="final_summary",
