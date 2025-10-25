@@ -75,13 +75,7 @@ ARCHETYPE_DESCRIPTIONS = {
 
 # Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
 _archetype_template = load_instructions("prompts/archetype_template.txt")
-# Allow overriding the emergency phases via an environment variable so the FASTAPI wrapper
-# (main.py) can pass user-defined emergency plan text at runtime by setting
-# EMERGENCY_PHASES in the process environment (or multi-persona-agent/.env).
-_emergency_phases = os.environ.get("EMERGENCY_PHASES")
-if not _emergency_phases:
-    # Fallback to the on-disk template if no env override is present.
-    _emergency_phases = load_text("prompts/emergency_plan.txt")
+
 
 # Calculate actual counts from proportions
 archetype_counts = {}
@@ -110,9 +104,7 @@ if remaining > 0:
 agent_counter = 0
 for archetype, count in archetype_counts.items():
     arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
-    instruction_text = _archetype_template.replace(
-        "{ARCHETYPE_DESC}", arche_desc
-    ).replace("{EMERGENCY_PHASES}", _emergency_phases)
+    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
 
     for i in range(count):
         agent_counter += 1

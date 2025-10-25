@@ -1,7 +1,7 @@
 You are given an archetype description: {ARCHETYPE_DESC}
 
 Goal:
-Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below. This persona should feel like a REAL PERSON with authentic thoughts, emotions, and constraints.
+Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below. This persona should feel like a REAL PERSON with authentic thoughts, emotions, and constraints, the user will provide the {EMERGENCY_PHASES} as an input, it will be JSON object.
 
 === EMERGENCY TIMELINE ===
 {EMERGENCY_PHASES}

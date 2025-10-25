@@ -10,13 +10,10 @@ so you can inspect basic metadata.
 
 from typing import Any, Dict, Optional
 import os
-import json
-import sys
-import types
 from importlib.machinery import SourceFileLoader
-
+import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -27,8 +24,8 @@ from google.adk.cli.fast_api import get_fast_api_app
 
 # Compute paths relative to this file
 BASE_DIR = os.path.abspath(os.path.dirname(__file__))
-AGENT_DIR = os.path.abspath(os.path.join(BASE_DIR, "multi-persona-agent"))
-AGENT_PY_PATH = os.path.join(AGENT_DIR, "agent.py")
+AGENT_DIR = BASE_DIR  # Parent directory containing multi_tool_agent
+AGENT_PY_PATH = os.path.join(AGENT_DIR, "multi-persona-agent")
 
 # Load env for the agent (e.g., GOOGLE_API_KEY)
 load_dotenv(os.path.join(AGENT_DIR, ".env"))
@@ -41,56 +38,10 @@ SESSION_DB_URL = f"sqlite:///{SESSION_DB_PATH}"
 # and the ADK web UI if `web=True`.
 app: FastAPI = get_fast_api_app(
     agents_dir=AGENT_DIR,
-    session_db_kwargs={"url": SESSION_DB_URL},
-    allow_origins=["*"],  # TODO: tighten in production
-    web=True,
+    session_db_kwargs=SESSION_DB_URL,
+    allow_origins=["*"],  # In production, restrict this
+    web=True,  # Enable the ADK Web UI
 )
-
-# Disable OpenAPI/docs generation to avoid Pydantic schema issues during startup.
-# This prevents FastAPI from trying to build the OpenAPI schema (which inspects
-# ADK types that Pydantic cannot generate schemas for in this environment).
-# The ADK endpoints will still be registered by get_fast_api_app.
-# app.openapi = lambda: None
-# app.docs_url = None
-# app.redoc_url = None
-# app.openapi_url = None
-
-# Add any additional middleware you want
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
-def _load_root_agent_from_agent_py(agent_py_path: str):
-    """
-    Load the project's agent.py and return `root_agent`.
-
-    This sets up a temporary package entry so relative imports inside agent.py
-    (e.g. `from .utils import ...`) resolve when we load the module by path.
-    """
-    if not os.path.exists(agent_py_path):
-        raise FileNotFoundError(f"agent.py not found at: {agent_py_path}")
-
-    agent_dir = os.path.dirname(agent_py_path)
-    package_name = "mp_agent_pkg"
-
-    # Ensure package entry with proper __path__ so relative imports work
-    pkg = types.ModuleType(package_name)
-    pkg.__path__ = [agent_dir]
-    sys.modules[package_name] = pkg
-
-    loader = SourceFileLoader(f"{package_name}.agent", agent_py_path)
-    module = types.ModuleType(loader.name)
-    module.__package__ = package_name
-    loader.exec_module(module)  # type: ignore
-    sys.modules[loader.name] = module
-
-    if not hasattr(module, "root_agent"):
-        raise AttributeError("agent.py does not expose `root_agent`")
-    return getattr(module, "root_agent")
 
 
 @app.get("/health")
@@ -99,126 +50,171 @@ async def health_check():
     return {"status": "healthy"}
 
 
-@app.get("/agent-info")
-async def agent_info():
-    """Return basic metadata for the loaded root_agent."""
-    try:
-        root_agent = _load_root_agent_from_agent_py(AGENT_PY_PATH)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to load root_agent: {e}")
-
-    info: Dict[str, Any] = {
-        "agent_name": getattr(root_agent, "name", None),
-        "description": getattr(root_agent, "description", None),
-        "model": getattr(root_agent, "model", None),
-    }
-
-    tools = []
-    try:
-        for t in getattr(root_agent, "tools", []) or []:
-            tools.append(getattr(t, "__name__", str(t)))
-    except Exception:
-        tools = [str(getattr(root_agent, "tools", None))]
-
-    info["tools"] = tools
-    return info
-
-
-class SimpleChatRequest(BaseModel):
-    input: str
-    user_id: str = "anonymous"
-    session_id: Optional[str] = None
+# Pydantic model to accept JSON body for /simulate-flow.
+# Using a model provides validation and automatic OpenAPI docs.
+class SimulatePayload(BaseModel):
     app_name: Optional[str] = None
-    # Optional emergency_plan payload (string or structured JSON). If the caller
-    # provides structured JSON (object/array), we'll serialize it to a JSON string
-    # and set the EMERGENCY_PHASES environment variable so the agents can consume it.
-    emergency_plan: Optional[Any] = None
+    user_id: Optional[str] = None
+    # Optionally allow callers to provide the newMessage body used in /run_sse
+    new_message: Optional[Dict[str, Any]] = None
+    streaming: Optional[bool] = None
+    # Any other overrides can be added here
 
 
-async def get_first_app_name() -> str:
-    """Query the ADK helper to pick the first registered app name."""
+@app.post("/simulate-flow")
+async def simulate_flow(
+    request: Request,
+    payload: Optional[SimulatePayload] = None,
+    app_name: str = "multi-persona-agent",
+    user_id: str = "user",
+):
+    """
+    Simulate a request flow against the ADK endpoints registered by get_fast_api_app.
+
+    Sequence:
+      1) POST /apps/{app_name}/users/{user_id}/sessions
+      2) GET  /apps/{app_name}/eval_sets
+      3) GET  /apps/{app_name}/eval_results
+      4) GET  /apps/{app_name}/users/{user_id}/sessions
+      5) POST /run_sse
+
+    This endpoint forwards the requests to the local service (using the same host/port
+    the incoming request used) and prints INFO-style lines similar to the example flow.
+    The JSON summary of responses is returned to the caller.
+
+    Notes:
+      - If you send a JSON body, it will be parsed into `payload` (Content-Type: application/json).
+        Fields in that JSON (app_name, user_id, new_message, streaming) will override the
+        corresponding query parameters.
+      - You can still call this endpoint using query parameters (existing behavior).
+    """
+    # If a JSON body was provided, prefer its values over query params.
+    if payload:
+        app_name = payload.app_name or app_name
+        user_id = payload.user_id or user_id
+
+    base_url = str(request.base_url).rstrip("/")
+    # Attempt to determine a port for the INFO log line; fall back to 0 if unknown.
     try:
-        async with httpx.AsyncClient() as client:
-            r = await client.get("http://127.0.0.1:8080/list-apps", timeout=5.0)
-            j = r.json()
-            return j[0] if isinstance(j, list) and j else "prompts"
-    except Exception:
-        return "prompts"
-
-
-@app.post("/chat")
-async def chat_simple(req: SimpleChatRequest):
-    """
-    Simple chat wrapper: translates {input, user_id, session_id, app_name}
-    into the ADK /run payload and forwards it to the internal /run endpoint.
-    """
-    app_name = req.app_name or await get_first_app_name()
-
-    # If the caller provided an emergency plan in this request, expose it to the
-    # agents by writing it to the process environment. The ADK agent loader
-    # re-imports agent modules on each run, so setting this env var before
-    # forwarding to /run lets multi-persona-agent/agent.py read the user-provided
-    # emergency plan via os.environ["EMERGENCY_PHASES"].
-    if getattr(req, "emergency_plan", None):
-        plan = req.emergency_plan
-        # If the caller passed structured JSON (dict/list), serialize it to a string.
-        # If they passed a raw string, use it directly.
-        os.environ["EMERGENCY_PHASES"] = (
-            json.dumps(plan) if not isinstance(plan, str) else plan
+        port_display = (
+            request.client.port if request.client and request.client.port else 0
         )
+    except Exception:
+        port_display = 0
 
-    # Ensure a valid session exists. If the caller didn't provide a session_id,
-    # create one via the ADK session-create endpoint: POST /apps/{app_name}/users/{user_id}/sessions
-    session_id = req.session_id
-    if not session_id:
+    async def _safe_json(resp: httpx.Response):
         try:
-            async with httpx.AsyncClient() as client:
-                create_resp = await client.post(
-                    f"http://127.0.0.1:8080/apps/{app_name}/users/{req.user_id}/sessions",
-                    json={},
-                    timeout=10.0,
-                )
-                create_json = create_resp.json()
-                # Try common keys for returned session id
-                session_id = (
-                    create_json.get("session_id")
-                    or create_json.get("sessionId")
-                    or create_json.get("id")
-                    or create_json.get("session", {}).get("id")
-                    or "default"
-                )
+            return resp.json()
         except Exception:
-            session_id = "default"
+            return {"text": resp.text}
 
-    run_payload = {
-        "app_name": app_name,
-        "user_id": req.user_id,
-        "session_id": session_id,
-        "new_message": {"role": "user", "parts": [{"text": req.input}]},
-        "streaming": False,
-    }
-
-    # Forward request to the ADK /run endpoint using an async HTTP client.
-    try:
-        async with httpx.AsyncClient() as client:
+    results = {}
+    async with httpx.AsyncClient(base_url=base_url, timeout=30.0) as client:
+        # 1) Create session
+        try:
             resp = await client.post(
-                "http://127.0.0.1:8080/run", json=run_payload, timeout=30.0
+                f"/apps/{app_name}/users/{user_id}/sessions", json={}
             )
-    except Exception as e:
-        raise HTTPException(
-            status_code=502, detail=f"Failed to call internal /run: {e}"
+            print(
+                f'INFO:     127.0.0.1:{port_display} - "POST /apps/{app_name}/users/{user_id}/sessions HTTP/1.1" {resp.status_code} OK'
+            )
+            results["create_session"] = await _safe_json(resp)
+        except Exception as e:
+            results["create_session_error"] = str(e)
+            # continue but record error
+            print(
+                f"ERROR: failed POST /apps/{app_name}/users/{user_id}/sessions -> {e}"
+            )
+            results["status"] = "partial_failure"
+            return results
+
+        # Try to extract session id from common response shapes
+        create_json = results.get("create_session") or {}
+        session_id = (
+            create_json.get("session_id")
+            or create_json.get("sessionId")
+            or create_json.get("id")
+            or (create_json.get("session") or {}).get("id")
+            or "default-session"
         )
 
-    # Mirror the /run response (list of events) or return an error body
-    try:
-        return resp.json()
-    except Exception:
-        return {"status": "error", "detail": resp.text}
+        await asyncio.sleep(0.1)
+
+        # 2) GET eval_sets
+        try:
+            resp = await client.get(f"/apps/{app_name}/eval_sets")
+            print(
+                f'INFO:     127.0.0.1:{port_display} - "GET /apps/{app_name}/eval_sets HTTP/1.1" {resp.status_code} OK'
+            )
+            results["eval_sets"] = await _safe_json(resp)
+        except Exception as e:
+            results["eval_sets_error"] = str(e)
+            print(f"ERROR: failed GET /apps/{app_name}/eval_sets -> {e}")
+
+        await asyncio.sleep(0.08)
+
+        # 3) GET eval_results
+        try:
+            resp = await client.get(f"/apps/{app_name}/eval_results")
+            print(
+                f'INFO:     127.0.0.1:{port_display} - "GET /apps/{app_name}/eval_results HTTP/1.1" {resp.status_code} OK'
+            )
+            results["eval_results"] = await _safe_json(resp)
+        except Exception as e:
+            results["eval_results_error"] = str(e)
+            print(f"ERROR: failed GET /apps/{app_name}/eval_results -> {e}")
+
+        await asyncio.sleep(0.08)
+
+        # 4) GET sessions list
+        try:
+            resp = await client.get(f"/apps/{app_name}/users/{user_id}/sessions")
+            print(
+                f'INFO:     127.0.0.1:{port_display} - "GET /apps/{app_name}/users/{user_id}/sessions HTTP/1.1" {resp.status_code} OK'
+            )
+            results["list_sessions"] = await _safe_json(resp)
+        except Exception as e:
+            results["list_sessions_error"] = str(e)
+            print(f"ERROR: failed GET /apps/{app_name}/users/{user_id}/sessions -> {e}")
+
+        await asyncio.sleep(0.08)
+
+        # 5) POST /run_sse
+        # Allow callers to override the newMessage via the JSON body (payload.new_message).
+        default_new_message = {
+            "parts": [{"text": "Hello from simulate_flow"}],
+            "role": "user",
+        }
+        chosen_new_message = (
+            payload.new_message
+            if (payload and payload.new_message)
+            else default_new_message
+        )
+
+        run_payload = {
+            "appName": app_name,
+            "userId": user_id,
+            "sessionId": session_id,
+            "newMessage": chosen_new_message,
+            "streaming": payload.streaming
+            if (payload and payload.streaming is not None)
+            else False,
+        }
+        try:
+            resp = await client.post("/run_sse", json=run_payload)
+            print(
+                f'INFO:     127.0.0.1:{port_display} - "POST /run_sse HTTP/1.1" {resp.status_code} OK'
+            )
+            results["run_sse"] = await _safe_json(resp)
+        except Exception as e:
+            results["run_sse_error"] = str(e)
+            print(f"ERROR: failed POST /run_sse -> {e}")
+
+    # Final status
+    results.setdefault("status", "ok")
+    return results
 
 
 if __name__ == "__main__":
-    # Run locally for development:
-    # uvicorn server.main:app --reload --port 8080
-    import uvicorn
-
-    uvicorn.run(app, host="0.0.0.0", port=8080)
+    print("Starting FastAPI server...")
+    uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)
