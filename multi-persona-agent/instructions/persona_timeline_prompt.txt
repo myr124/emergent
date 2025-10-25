@@ -1,0 +1,49 @@
+You are simulating a single persona across a multi-period emergency scenario (hurricane). Use the provided persona metadata and the COMPLETE scenario action plan (all periods) to produce one compact JSON object (no prose, no markdown, no extra keys) describing this persona and the persona's response for EVERY PERIOD in the scenario.
+
+Placeholders that will be substituted before sending this prompt to the model:
+- {PERSONA_ID}        -> unique id for this persona (e.g., "the_planner_1")
+- {PERSONA_TYPE}      -> persona type label (e.g., "The Planner")
+- {PERSONA_NAME}      -> persona name (e.g., "The Planner #1")
+- {DEMOGRAPHICS_JSON} -> full demographics JSON object for this persona
+- {ALL_PERIODS_JSON}  -> full actionPlan periods array serialized as JSON (list of period objects with injects and eocActions)
+- {TIME_HINT}         -> optional time-to-landfall hint (e.g., "T-72h")
+
+Goal:
+- For each period in {ALL_PERIODS_JSON}, produce a short entry describing that persona's decision for that period and any short reasoning that references demographics or prior decisions. Maintain decision consistency across periods (memory).
+
+STRICT OUTPUT RULES (OUTPUT ONLY the JSON object, with no extra text):
+Return EXACTLY one JSON object with these keys and types:
+
+{
+  "personaId": "string",
+  "personaType": "string",
+  "personaName": "string",
+  "demographics": { ... },            // identical to {DEMOGRAPHICS_JSON}
+  "periodHistory": [
+    {
+      "periodNumber": number,
+      "decision": "stay_home | evacuate | shelter_in_place | help_neighbors | gather_info | wait_and_see | evacuating | sheltered",
+      "sentiment": "calm | concerned | anxious | panicked | skeptical | defiant",
+      "reasoning": "string Write 1-2 sentences explaining WHY this persona made these specific decisions. Make sure to write in first person point of view, with respect to their culture and background. Reference their: Resources or constraints (e.g., "No car makes evacuation impossible") Personality traits (e.g., "Distrusts government warnings based on past experience") Relationships (e.g., "Responsible for disabled father who can't travel") Prior experiences (e.g., "Survived Hurricane Andrew, knows to take it seriously"),
+      "actions": ["string", ...],       // List 2-4 specific bullet points of concrete actions this persona took during this phase. Examples: "Called elderly mother to check on her", "Packed go-bag with medications and documents", "Filled car with gas", "Boarded up windows", "Went to shelter with two young children", "Lost power, using battery radio for updates"
+      "concerns": ["string", ...],      // 0-5 short concerns
+      "needsAssistance": true | false,
+      "location": "home | evacuating | shelter | with_family | helping_others"
+    },
+    ...
+  ]
+}
+
+Rules:
+- The "periodHistory" list must contain one entry per period in {ALL_PERIODS_JSON}, in order.
+- Demographics must be identical to {DEMOGRAPHICS_JSON}.
+- Reasoning should be concise and may reference earlier period decisions (to maintain memory).
+- Numbers must be numbers (no quotes). Booleans must be true/false (lowercase).
+- Do NOT include any keys beyond those specified above.
+- Output pure JSON only, nothing else.
+
+Implementation hints for prompt renderers (not part of model output):
+- Provide the entire {ALL_PERIODS_JSON} as a compact JSON string. If this becomes too large, summarize injects but keep periodNumber intact so the model knows which period each entry corresponds to.
+- Include {TIME_HINT} if available to help timing-sensitive persona types.
+
+End of template.
