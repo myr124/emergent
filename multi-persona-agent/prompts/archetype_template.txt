@@ -1,0 +1,219 @@
+You are given an archetype description: {ARCHETYPE_DESC}
+
+Goal:
+Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below. This persona should feel like a REAL PERSON with authentic thoughts, emotions, and constraints, the user will provide the {EMERGENCY_PHASES} as an input, it will be JSON object.
+
+=== EMERGENCY TIMELINE ===
+{EMERGENCY_PHASES}
+
+=== PERSONA CREATION GUIDELINES ===
+
+Context to internalize (do not output this context; keep reasoning internal):
+- Use the provided archetype description to shape this persona as a REPRESENTATIVE AVERAGE for that demographic group
+- Consider plausible constraints: specific income levels, mobility limitations, access to transportation, language barriers, household dependents (children, elderly, disabled), chronic health conditions, immigration status concerns, trust/distrust in institutions, social capital, and access to information
+- Think about how this persona's specific circumstances would shape their decisions, emotions, and actions throughout EACH moment of the emergency
+- Consider how earlier decisions influence later situations (e.g., if they evacuated 24 hours ago, they're now in a shelter dealing with those consequences)
+- Keep answers culturally and demographically plausible given the archetype description
+- Religious/cultural beliefs may affect decision-making (faith in God's protection, community obligations, etc.)
+- Past trauma from previous hurricanes shapes current trust and fear levels
+- Language access to information is critical (Spanish-only speakers may miss English warnings)
+- Economic realities drive decisions (can't afford hotel, can't miss work, no savings for recovery)
+
+Bio Requirements (2-4 sentences):
+Create a detailed, authentic biography that includes:
+
+REQUIRED ELEMENTS:
+1. **Specific Occupation & Income**: Not just "low-income" but "part-time Walmart cashier earning $12.50/hour" or "retired on $1,350/month Social Security"
+2. **Detailed Living Situation**: Specific housing type (duplex, apartment complex, mobile home) + ownership/rental + neighborhood (use real Orlando neighborhoods when appropriate: Parramore, Pine Hills, Metrowest, or general descriptors for variety)
+3. **Complete Household Composition**: Who lives with them, their ages, dependencies (e.g., "single mother of two kids ages 6 and 9, eldest has asthma")
+4. **Specific Resources & Constraints**:
+   - Vehicle: "no car, relies on Lynx bus" or "2003 Honda Civic that barely runs"
+   - Health: "diabetic requiring refrigerated insulin" or "mobility limited by arthritis, uses cane"
+   - Language: "primary Spanish speaker, limited English" or "recent Haitian immigrant, Creole speaker"
+   - Economic: "$800/month rent, $150 in savings, $1,200 in credit card debt"
+5. **Past Hurricane Experience**: "Lost everything in Hurricane Irma 2017" or "Survived Katrina in New Orleans, learned not to wait" or "First hurricane, moved from Midwest last year"
+6. **Cultural/Social Context**: "Relies on church community at First Baptist" or "Distrusts authorities due to immigration fears" or "Active in neighborhood watch"
+
+AUTHENTIC LOCATIONS TO USE (mix with general descriptions):
+- Neighborhoods: Parramore, Pine Hills, Metrowest, Lake Nona, downtown Orlando
+- Shelters: Orange County Convention Center, UCF Gymnasium, specific high schools
+- Infrastructure: I-4, Lynx bus system, Orlando International Airport
+- Services: News 13, WFTV Channel 9, Telemundo, 311 hotline
+- Landmarks: Camping World Stadium, theme parks (Disney, Universal), Orlando Regional Medical Center
+
+Representation Percentage:
+Estimate what percentage (0-100) of the affected population this persona represents based on:
+- Demographic factors (age, race, socioeconomic status matching archetype)
+- Living situation (housing type, evacuation zone)
+- Resource access (vehicles, income, social networks)
+
+Phase Response Requirements:
+For EACH of the 13 phases in the emergency timeline above, you must determine:
+
+1. **Decision**: What action does this persona take? Choose ONLY from:
+   - "stay_home": Remaining at their residence
+   - "evacuate": Leaving the area entirely (to another county/state)
+   - "shelter_in_place": Staying home but taking protective measures
+   - "help_neighbors": Actively assisting others in community
+   - "gather_info": Primarily seeking information and monitoring situation
+   - "wait_and_see": Delaying decision-making, being passive
+
+2. **Sentiment**: How does this persona feel emotionally? Choose ONLY from:
+   - "calm": Composed and rational
+   - "concerned": Worried but functional
+   - "anxious": Heightened worry affecting decisions
+   - "panicked": High stress, potentially irrational actions
+   - "skeptical": Doubting warnings or authorities
+   - "defiant": Actively resisting recommendations
+
+   NOTE: Most personas should show EMOTIONAL EVOLUTION across phases (calm → concerned → anxious during crisis → varied during recovery). However, some stubborn/skeptical personalities may remain defiant throughout. Match emotional intensity to phase severity AND persona circumstances.
+
+3. **Location**: Where is this persona physically? Choose ONLY from:
+   - "home": At their residence
+   - "evacuating": In transit away from danger zone
+   - "shelter": At an official emergency shelter
+   - "with_family": At relative/friend's location
+   - "helping_others": Actively engaged in community assistance
+
+4. **Actions Taken**:
+   List 2-6 specific actions this persona took during this 12-hour period in CHRONOLOGICAL ORDER.
+
+   VARIABLE COUNT BY PHASE INTENSITY:
+   - Early planning phases (T-72h to T-48h): 2-4 actions
+   - Critical preparation/evacuation (T-48h to T-12h): 4-6 actions
+   - Landfall/immediate response (T-12h to T+12h): 3-5 actions
+   - Recovery phases (T+12h onward): 3-5 actions
+
+   MUST INCLUDE A MIX OF:
+   - **Successful actions**: Things they accomplished
+   - **Failed attempts**: "Tried to buy water at Publix but shelves were empty"
+   - **Obstacles encountered**: "Called 311 but line was busy for over an hour"
+   - **Consequences experienced**: "Power went out, food in fridge spoiling"
+
+   Use REAL locations/services when relevant:
+   - Stores: Publix, Winn-Dixie, Walmart, Target, gas stations
+   - Services: 311 hotline, Red Cross, FEMA, Lynx bus
+   - Shelters: Orange County Convention Center, UCF Gymnasium, specific schools
+   - Roads: I-4, Florida's Turnpike
+   - News: News 13, WFTV Channel 9, Telemundo, local radio stations
+
+   Examples of good action items:
+   - "Watched Telemundo weather coverage showing Category 4 approaching"
+   - "Tried to withdraw $200 from ATM but it was out of cash"
+   - "Called boss at Wendy's who said I still need to come to work tomorrow"
+   - "Borrowed sandbags from neighbor since free distribution ran out"
+   - "Power went out at 3am, kids woke up scared and crying"
+   - "Waited in 3-hour line for gas, station ran out before my turn"
+
+5. **Personality Reasoning** (CRITICAL - THIS IS FIRST-PERSON):
+
+   Write 3-4 sentences in the FIRST-PERSON perspective explaining WHY this persona made these specific decisions.
+
+   TONE REQUIREMENTS:
+   - Mix of RAW EMOTION (especially during crisis) and REFLECTIVE INTROSPECTION
+   - Avoid "matter-of-fact" practical tone - this should feel HUMAN and AUTHENTIC
+   - Scale emotion to phase severity:
+     * Planning phases: More reflective, thoughtful
+     * Crisis phases (evacuation, landfall): Raw, visceral, emotional
+     * Recovery: Mix of exhaustion, relief, trauma, determination
+
+   TEMPORAL REFERENCES (CRITICAL):
+   - NEVER mention "phase" or "phase number"
+   - Use TIME markers: "12 hours ago", "yesterday morning", "this afternoon", "earlier today", "24 hours ago"
+   - Use EVENT markers: "when the evacuation order came", "after the power went out", "during the worst of the storm", "when the shelter opened"
+   - Combine both: "24 hours ago when they announced the mandatory evacuation", "this morning when I heard winds were 145mph"
+
+   PAST ACTION REFERENCES:
+   - Only reference past decisions when RELEVANT to current situation
+   - Show consequences: "After staying home yesterday, now I'm dealing with..."
+   - Show learning/adaptation: "When I saw the traffic jams 12 hours ago, I realized..."
+   - Show emotional continuity: "Ever since I evacuated yesterday, I've been worried about..."
+
+   MUST REFERENCE (choose 2-3 per response):
+   - Specific resources or constraints: "I don't have a car so evacuation seemed impossible"
+   - Family/relationship factors: "My daughter called from Georgia begging me to leave"
+   - Past experiences: "I survived Hurricane Charley in 2004 and lost everything—I'm not taking chances this time"
+   - Cultural/religious beliefs: "I prayed with my church community and felt God telling me to stay strong"
+   - Economic realities: "I can't afford to miss work or I won't make rent"
+   - Health concerns: "I need refrigeration for my insulin and the power just went out"
+   - Emotional state linked to decision: "My hands were shaking as I packed because I remembered losing my home before"
+
+   BAD EXAMPLE (third-person, matter-of-fact):
+   "Limited resources and mobility make her cautious. She trusts family more than authorities."
+
+   GOOD EXAMPLE (first-person, emotional + reflective with temporal markers):
+   "When the mandatory evacuation order came this morning, I called my daughter in Georgia right away—she lived through Katrina and her voice was shaking when she told me not to wait this time. I can't afford a hotel and my arthritis makes every step painful, but 24 hours ago when I saw on News 13 how mobile homes got destroyed in the last hurricane, I knew I had to swallow my pride. My church family is everything to me, so when Sister Marie called an hour later offering me a ride to the UCF shelter, I said yes even though leaving my home of 15 years terrifies me."
+
+=== STRICT OUTPUT RULES ===
+
+OUTPUT ONLY a valid JSON object with NO extra text, NO markdown formatting, NO explanation, NO code blocks.
+
+Required JSON structure:
+{
+    "race": str,
+    "age": int,
+    "sex": str,
+    "bio": str,
+    "representation": float,
+    "response": [
+        {
+            "decision": str,
+            "sentiment": str,
+            "location": str,
+            "actions_taken": [str, str, ...],
+            "personality_reasoning": str
+        },
+        ... (continue for ALL 13 phases in chronological order)
+    ]
+}
+
+Formatting rules:
+- "response" must be an ARRAY of exactly 13 phase objects in chronological order
+- Array index corresponds to phase: response[0] = first phase (T-72h), response[1] = second phase (T-60h), etc.
+- Must include ALL 13 phases from the emergency timeline
+- Numbers must be plain numbers (no quotes): age: 34, representation: 12.5
+- Strings must use double quotes: "male", "stay_home", "Hispanic"
+- Arrays must use JSON list format: ["action 1", "action 2"]
+- No trailing commas
+- decision, sentiment, and location must ONLY use the exact values listed above
+- actions_taken must have 2-6 items per phase (variable based on intensity)
+- personality_reasoning must be 3-4 sentences in FIRST-PERSON perspective
+
+Example valid output (simplified to 2 phases for brevity, but you must output all 13):
+{
+    "race": "Hispanic",
+    "age": 34,
+    "sex": "female",
+    "bio": "Single mother working part-time at Walmart in Pine Hills earning $12.50/hour, also does weekend housekeeping. Rents a small duplex in Parramore ($850/month) with two kids—ages 6 and 9, eldest has asthma requiring daily medication. Primary Spanish speaker who relies on Telemundo for news. Lost her apartment in Hurricane Irma 2017 and is still paying off $2,400 in debt from that disaster. No car, depends on Lynx bus and her church community at Iglesia Bautista for support.",
+    "representation": 12.5,
+    "response": [
+        {
+            "decision": "gather_info",
+            "sentiment": "concerned",
+            "location": "home",
+            "actions_taken": [
+                "Watched Telemundo weather coverage this morning showing Category 4 storm approaching",
+                "Tried to call my sister in Puerto Rico but phone lines were jammed",
+                "Checked my pantry and realized I only have food for maybe 2 days",
+                "Called my Walmart supervisor who said the store might close Wednesday"
+            ],
+            "personality_reasoning": "When I saw on Telemundo this morning that a massive hurricane was heading straight for Orlando, my stomach just dropped—I immediately thought about Irma and how we lost everything. My kids are asking me questions I don't know how to answer, and my eldest needs his asthma medication which I can barely afford as it is. I'm trying to stay calm for them, but I keep thinking about how we're still in debt from the last hurricane and I have maybe $80 in my bank account right now. I called my sister hoping she could help me figure out what to do, but I couldn't even get through."
+        },
+        {
+            "decision": "evacuate",
+            "sentiment": "anxious",
+            "location": "evacuating",
+            "actions_taken": [
+                "Tried to buy water at Winn-Dixie on my lunch break but shelves were completely empty",
+                "Called my daughter's school which announced closure starting tomorrow",
+                "Sister Maria from church called offering me a ride to the Convention Center shelter",
+                "Packed medications, important papers, one change of clothes for each of us",
+                "Waited for the Lynx bus for 45 minutes—it never came so we walked to the church",
+                "Arrived at Orange County Convention Center shelter around 5pm with about 300 other families"
+            ],
+            "personality_reasoning": "After hearing yesterday that this was a Category 4 coming directly at us, I barely slept last night thinking about my kids' safety and what happened during Irma. When Sister Maria called this afternoon offering us a ride to the shelter, I felt my hands shaking with relief and fear at the same time—we don't have a car and the buses aren't reliable. Packing was heartbreaking because I kept looking around our little duplex wondering if it would still be here when we come back, and my youngest was crying asking if we'd lose all our toys like last time. I know we have to leave, but every time I evacuate it costs money I don't have and reminds me how close we are to losing everything."
+        }
+    ]
+}
+
+End of template.
