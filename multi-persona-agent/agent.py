@@ -2,27 +2,48 @@ from pydantic import Field
 from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
 from pydantic import BaseModel
 from typing import List, Dict, Literal
+import os
 from .utils import load_instructions, format_phases_for_prompt, load_text
+
 
 # Steps
 # 1. Generate 50 personas of varying archetypes
 # 2. Each of these personas should have some opinion on the state of the hurricane
 #
 class PhaseResponse(BaseModel):
-    decision: Literal["stay_home", "evacuate", "shelter_in_place", "help_neighbors", "gather_info", "wait_and_see"]
-    sentiment: Literal["calm", "concerned", "anxious", "panicked", "skeptical", "defiant"]
+    decision: Literal[
+        "stay_home",
+        "evacuate",
+        "shelter_in_place",
+        "help_neighbors",
+        "gather_info",
+        "wait_and_see",
+    ]
+    sentiment: Literal[
+        "calm", "concerned", "anxious", "panicked", "skeptical", "defiant"
+    ]
     location: Literal["home", "evacuating", "shelter", "with_family", "helping_others"]
-    actions_taken: List[str] = Field(description="Bullet points of actions taken during this phase")
-    personality_reasoning: str = Field(description="1-2 sentences explaining why this persona made these decisions")
+    actions_taken: List[str] = Field(
+        description="Bullet points of actions taken during this phase"
+    )
+    personality_reasoning: str = Field(
+        description="1-2 sentences explaining why this persona made these decisions"
+    )
 
 
 class PersonaDetailedSchema(BaseModel):
     race: str
     age: int
     sex: str
-    bio: str = Field(description="Detailed biography including occupation, family, housing, resources")
-    representation: float = Field(description="Estimated % of population this persona represents (0-100)")
-    response: List[PhaseResponse] = Field(description="Array of phase responses in chronological order (index 0 = phase 1, index 1 = phase 2, etc.)")
+    bio: str = Field(
+        description="Detailed biography including occupation, family, housing, resources"
+    )
+    representation: float = Field(
+        description="Estimated % of population this persona represents (0-100)"
+    )
+    response: List[PhaseResponse] = Field(
+        description="Array of phase responses in chronological order (index 0 = phase 1, index 1 = phase 2, etc.)"
+    )
 
 
 sub_agents: List[LlmAgent] = []
@@ -34,12 +55,12 @@ TOTAL_AGENTS = 20
 # Archetype proportions (percentages as decimals: 0.30 = 30%, 0.05 = 5%)
 # Note: These should sum to approximately 1.0 (100%)
 ARCHETYPE_PROPORTIONS = {
-    "lowincome": 0.30,       # 30% of population
-    "middleclass": 0.24,     # 24% of population
-    "retired": 0.20,         # 20% of population
-    "underemployed": 0.16,   # 16% of population
-    "highincome": 0.06,      # 6% of population
-    "student": 0.04,         # 4% of population
+    "lowincome": 0.30,  # 30% of population
+    "middleclass": 0.24,  # 24% of population
+    "retired": 0.20,  # 20% of population
+    "underemployed": 0.16,  # 16% of population
+    "highincome": 0.06,  # 6% of population
+    "student": 0.04,  # 4% of population
 }
 
 # Archetype descriptions
@@ -54,7 +75,13 @@ ARCHETYPE_DESCRIPTIONS = {
 
 # Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
 _archetype_template = load_instructions("prompts/archetype_template.txt")
-_emergency_phases = load_text("prompts/emergency_plan.txt")
+# Allow overriding the emergency phases via an environment variable so the FASTAPI wrapper
+# (main.py) can pass user-defined emergency plan text at runtime by setting
+# EMERGENCY_PHASES in the process environment (or multi-persona-agent/.env).
+_emergency_phases = os.environ.get("EMERGENCY_PHASES")
+if not _emergency_phases:
+    # Fallback to the on-disk template if no env override is present.
+    _emergency_phases = load_text("prompts/emergency_plan.txt")
 
 # Calculate actual counts from proportions
 archetype_counts = {}
@@ -69,8 +96,10 @@ for archetype, proportion in ARCHETYPE_PROPORTIONS.items():
 # Second pass: distribute remaining agents to archetypes with largest remainders
 remaining = TOTAL_AGENTS - agents_allocated
 if remaining > 0:
-    remainders = [(archetype, (TOTAL_AGENTS * proportion) - archetype_counts[archetype])
-                  for archetype, proportion in ARCHETYPE_PROPORTIONS.items()]
+    remainders = [
+        (archetype, (TOTAL_AGENTS * proportion) - archetype_counts[archetype])
+        for archetype, proportion in ARCHETYPE_PROPORTIONS.items()
+    ]
     remainders.sort(key=lambda x: x[1], reverse=True)
 
     for i in range(remaining):
@@ -81,16 +110,18 @@ if remaining > 0:
 agent_counter = 0
 for archetype, count in archetype_counts.items():
     arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
-    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc).replace("{EMERGENCY_PHASES}", _emergency_phases)
+    instruction_text = _archetype_template.replace(
+        "{ARCHETYPE_DESC}", arche_desc
+    ).replace("{EMERGENCY_PHASES}", _emergency_phases)
 
     for i in range(count):
         agent_counter += 1
         agent = LlmAgent(
-            name=f"{archetype}_{i+1}",
+            name=f"{archetype}_{i + 1}",
             model="gemini-2.0-flash",
             instruction=instruction_text,
             description=f"{archetype} population subset description",
-            output_key=f"{archetype}_{i+1}_key",
+            output_key=f"{archetype}_{i + 1}_key",
             # 👇 Enforce detailed persona output with phase responses
             output_schema=PersonaDetailedSchema,
         )
@@ -134,7 +165,7 @@ sequential_pipeline_agent = SequentialAgent(
     name="FinalAnalysisAgent",
     sub_agents=[
         all_personas_agent,  # Phase 1: All personas in parallel (faster!)
-        merger_agent,        # Phase 2: Merge all responses
+        merger_agent,  # Phase 2: Merge all responses
     ],
     description="Coordinates the creation of agents and summarization of reactions to hurricane",
 )
