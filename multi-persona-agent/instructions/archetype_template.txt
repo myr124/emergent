@@ -1,41 +1,140 @@
 You are given an archetype description: {ARCHETYPE_DESC}
 
 Goal:
-Generate a single realistic persona who is currently experiencing a hurricane and produce a compact JSON object that matches the STRICT OUTPUT RULES below.
+Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below.
+
+=== EMERGENCY TIMELINE ===
+{EMERGENCY_PHASES}
+
+=== PERSONA CREATION GUIDELINES ===
 
 Context to internalize (do not output this context; keep reasoning internal):
 - Use the provided archetype description to shape the persona's socioeconomic background, household composition, primary vulnerabilities, and likely social networks.
-- Consider plausible constraints (income, mobility, access to transportation, language, household dependents, health conditions, and trust in institutions).
-- Imagine what immediate needs, concerns, and likely actions this persona would have during a hurricane.
+- Consider plausible constraints: income level, mobility, access to transportation, language barriers, household dependents (children, elderly, disabled), health conditions, trust in institutions, social capital, and access to information.
+- Think about how this persona's specific circumstances would shape their decisions, emotions, and actions throughout EACH phase of the emergency.
+- Consider how earlier phases influence later decisions (e.g., if they evacuated in phase 3, they're in a shelter during phases 6-8).
 - Keep answers culturally and demographically plausible given the archetype description.
 
-STRICT OUTPUT RULES (OUTPUT ONLY the JSON object, with no extra text, no markdown, no explanation):
-- Return exactly one JSON object with these keys and types:
+Bio Requirements:
+Create a detailed biography (2-4 sentences) that includes:
+- Occupation or employment status
+- Living situation (house type, ownership/rental, neighborhood)
+- Household composition (who lives with them: spouse, children, elderly parents, roommates, alone, etc.)
+- Key resources or constraints (vehicle ownership, income level, health issues, language barriers)
+- One unique detail that makes this person memorable (hobby, community role, specific worry)
+
+Representation Percentage:
+Estimate what percentage (0-100) of the affected population this persona represents based on:
+- Demographic factors (age, race, socioeconomic status)
+- Living situation (housing type, location)
+- Resource access (vehicles, income, social networks)
+
+Phase Response Requirements:
+For EACH phase in the emergency timeline above, you must determine:
+
+1. **Decision**: What action does this persona take? Choose from:
+   - "stay_home": Remaining at their residence
+   - "evacuate": Leaving the area entirely
+   - "shelter_in_place": Staying home but taking protective measures
+   - "help_neighbors": Actively assisting others
+   - "gather_info": Primarily seeking information
+   - "wait_and_see": Delaying decision-making
+
+2. **Sentiment**: How does this persona feel? Choose from:
+   - "calm": Composed and rational
+   - "concerned": Worried but functional
+   - "anxious": Heightened worry affecting decisions
+   - "panicked": High stress, potentially irrational
+   - "skeptical": Doubting warnings or authorities
+   - "defiant": Actively resisting recommendations
+
+3. **Location**: Where is this persona? Choose from:
+   - "home": At their residence
+   - "evacuating": In transit away from danger
+   - "shelter": At an official emergency shelter
+   - "with_family": At relative/friend's location
+   - "helping_others": Actively engaged in community assistance
+
+4. **Actions Taken**: List 2-4 specific bullet points of concrete actions this persona took during this phase. Examples:
+   - "Called elderly mother to check on her"
+   - "Packed go-bag with medications and documents"
+   - "Filled car with gas"
+   - "Boarded up windows"
+   - "Went to shelter with two young children"
+   - "Lost power, using battery radio for updates"
+
+5. **Personality Reasoning**: Write 1-2 sentences explaining WHY this persona made these specific decisions. Reference their:
+   - Resources or constraints (e.g., "No car makes evacuation impossible")
+   - Personality traits (e.g., "Distrusts government warnings based on past experience")
+   - Relationships (e.g., "Responsible for disabled father who can't travel")
+   - Prior experiences (e.g., "Survived Hurricane Andrew, knows to take it seriously")
+
+=== STRICT OUTPUT RULES ===
+
+OUTPUT ONLY a valid JSON object with NO extra text, NO markdown formatting, NO explanation.
+
+Required JSON structure:
 {
     "race": str,
     "age": int,
     "sex": str,
-    "response": str
+    "bio": str,
+    "representation": float,
+    "response": {
+        "phase_1": {
+            "decision": str,
+            "sentiment": str,
+            "location": str,
+            "actions_taken": [str, str, ...],
+            "personality_reasoning": str
+        },
+        "phase_2": { ... },
+        ... (continue for ALL phases in the timeline)
+    }
 }
-- Numbers must be plain numbers (no quotes). Booleans must be true/false (lowercase).
-- The "response" field must be a single short paragraph (1-3 sentences, maximum ~40 words) describing:
-  - The persona's immediate emotional reaction and sentiment about the hurricane,
-  - Their most likely immediate action or decision (e.g., shelter, evacuate, stay put, seek family support),
-  - One specific constraint or resource that most influences that decision (e.g., no car, elderly dependent, unreliable internet, strong community ties).
-- Do NOT include any extra keys, metadata, or commentary.
-- Do NOT print analysis or chain-of-thought; keep internal reasoning private.
 
-Formatting details and plausibility:
-- Choose race and sex as commonly used strings (e.g., "White", "Black", "Hispanic", "Asian", "Other"); choose sex as "male", "female", or another simple identifier.
-- Choose age as a realistic integer (e.g., 34, 72).
-- Ensure the "response" reads like a short first-person or third-person summary (either is acceptable) that clearly communicates sentiment, action, and constraint.
+Formatting rules:
+- Use phase numbers as keys: "phase_1", "phase_2", etc., matching the number of phases in the emergency timeline
+- Numbers must be plain numbers (no quotes): age: 34, representation: 8.5
+- Strings must use double quotes: "male", "stay_home"
+- Arrays must use JSON list format: ["action 1", "action 2"]
+- No trailing commas
+- decision, sentiment, and location must ONLY use the exact values listed above
+- actions_taken must have 2-4 items
 
-Example valid output (only shown here as an example; do not output this example in any response):
+Example valid output (simplified to 2 phases for brevity):
 {
     "race": "Hispanic",
     "age": 67,
     "sex": "female",
-    "response": "Worried and anxious; plans to stay with nearby family because she cannot drive and her limited mobility prevents evacuation, so she will shelter in place and rely on neighbors for supplies."
+    "bio": "Retired grocery store worker living in a mobile home in Parramore. Widowed with two adult children in other states. Limited mobility due to arthritis, relies on monthly Social Security income of $1,200. Active in church community.",
+    "representation": 8.5,
+    "response": {
+        "phase_1": {
+            "decision": "gather_info",
+            "sentiment": "concerned",
+            "location": "home",
+            "actions_taken": [
+                "Called daughter in Georgia to discuss options",
+                "Checked emergency kit and found flashlight batteries dead",
+                "Filled bathtub and several containers with water",
+                "Asked neighbor about evacuation plans"
+            ],
+            "personality_reasoning": "Limited resources and mobility make her cautious about leaving. She trusts family advice more than authorities and wants to coordinate with her church community before making decisions."
+        },
+        "phase_2": {
+            "decision": "evacuate",
+            "sentiment": "anxious",
+            "location": "evacuating",
+            "actions_taken": [
+                "Accepted ride from church member to public shelter",
+                "Packed medications, important documents, and family photos",
+                "Left mobile home uncertain if it will survive",
+                "Arrived at UCF Gymnasium shelter with 200 others"
+            ],
+            "personality_reasoning": "Daughter's urgent phone call and church member's offer overcame her reluctance. Fears of mobile home destruction in high winds and memory of past hurricanes pushed her to evacuate despite anxiety about leaving her home."
+        }
+    }
 }
 
 End of template.

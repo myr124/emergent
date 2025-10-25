@@ -1,19 +1,29 @@
 from pydantic import Field
 from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
 from pydantic import BaseModel
-from typing import List
-from .utils import load_instructions
+from typing import List, Dict, Literal
+from .utils import load_instructions, format_phases_for_prompt, load_text
 
 
 # Steps
 # 1. Generate 50 personas of varying archetypes
 # 2. Each of these personas should have some opinion on the state of the hurricane
 #
-class PersonaMiniSchema(BaseModel):
+class PhaseResponse(BaseModel):
+    decision: Literal["stay_home", "evacuate", "shelter_in_place", "help_neighbors", "gather_info", "wait_and_see"]
+    sentiment: Literal["calm", "concerned", "anxious", "panicked", "skeptical", "defiant"]
+    location: Literal["home", "evacuating", "shelter", "with_family", "helping_others"]
+    actions_taken: List[str] = Field(description="Bullet points of actions taken during this phase")
+    personality_reasoning: str = Field(description="1-2 sentences explaining why this persona made these decisions")
+
+
+class PersonaDetailedSchema(BaseModel):
     race: str
     age: int
     sex: str
-    response: str
+    bio: str = Field(description="Detailed biography including occupation, family, housing, resources")
+    representation: float = Field(description="Estimated % of population this persona represents (0-100)")
+    response: Dict[str, PhaseResponse] = Field(description="Keyed by phase names like 'phase_1', 'phase_2', etc.")
 
 
 sub_agents: List[LlmAgent] = []
@@ -28,21 +38,22 @@ personality_archetypes = {
     "student": "student, low risk, socially connected",
 }
 
-# Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC}
+# Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
 _archetype_template = load_instructions("instructions/archetype_template.txt")
+_emergency_phases = load_text("instructions/emergency_plan.txt")
 
 for archetype in personality_archetypes:
     arche_desc = personality_archetypes[archetype]
-    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
+    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc).replace("{EMERGENCY_PHASES}", _emergency_phases)
 
     agent = LlmAgent(
         name=archetype,
-        model="gemini-2.0-flash-lite",
+        model="gemini-2.0-flash",
         instruction=instruction_text,
         description=f"{archetype} population subset description",
         output_key=f"{archetype}_key",
-        # 👇 Enforce tiny persona output (prevents giant blobs)
-        output_schema=PersonaMiniSchema,
+        # 👇 Enforce detailed persona output with phase responses
+        output_schema=PersonaDetailedSchema,
     )
     sub_agents.append(agent)
 
