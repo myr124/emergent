@@ -2,6 +2,7 @@ from pydantic import Field
 from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
 from pydantic import BaseModel
 from typing import List
+from .utils import load_instructions
 
 
 # Steps
@@ -27,23 +28,12 @@ personality_archetypes = {
     "student": "student, low risk, socially connected",
 }
 
+# Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC}
+_archetype_template = load_instructions("instructions/archetype_template.txt")
+
 for archetype in personality_archetypes:
-    instruction_text = (
-        "Generate a persona who is experiencing a hurricane using this archetype: "
-        + personality_archetypes[archetype]
-        + """
-STRICT OUTPUT RULES:
-Return ONLY this JSON object (no prose, no markdown, no extra keys):
-{
-    "race": str
-    "age": int
-    "sex": str
-    "response": str
-}
-Numbers must be numbers (no quotes). Booleans must be true/false (lowercase).
-Do not print long analyses; keep reasoning internal.
-"""
-    )
+    arche_desc = personality_archetypes[archetype]
+    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
 
     agent = LlmAgent(
         name=archetype,
@@ -67,7 +57,7 @@ def chunk(lst, n):
         yield lst[i : i + n]
 
 
-WAVE_SIZE = 6  # tune: 6–8 is a good sstart
+WAVE_SIZE = 6  # tune: 6–8 is a good start
 review_waves = []
 for i, wave_agents in enumerate(chunk(sub_agents, WAVE_SIZE), start=1):
     review_waves.append(
@@ -92,7 +82,7 @@ class outputSchema(BaseModel):
 merger_agent = LlmAgent(
     name="merger_agent",
     model="gemini-2.5-flash-lite",
-    instruction="Input: json objects from Summarize the overall sentiment of all the population subsets",  # improve with file loading for more detailed prompts
+    instruction=load_instructions("instructions/summarizer_instructions.txt"),
     description="Summarizes the entire sentiment of all population subsets",
     output_schema=outputSchema,
     output_key="final_summary",
