@@ -2,8 +2,7 @@ from pydantic import Field
 from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
 from pydantic import BaseModel
 from typing import List, Dict, Literal
-from .utils import load_instructions, format_phases_for_prompt, load_text, load_archetypes
-
+from .utils import load_instructions, format_phases_for_prompt, load_text
 
 # Steps
 # 1. Generate 50 personas of varying archetypes
@@ -29,50 +28,59 @@ class PersonaDetailedSchema(BaseModel):
 sub_agents: List[LlmAgent] = []
 
 
-# Load personality archetypes from external JSON file
-personality_archetypes = load_archetypes()
+# Embedded archetype definitions (faster than loading from JSON)
+ARCHETYPE_COUNTS = {
+    "lowincome": 15,
+    "middleclass": 12,
+    "retired": 10,
+    "underemployed": 8,
+    "highincome": 3,
+    "student": 2,
+}
+
+# Archetype descriptions
+ARCHETYPE_DESCRIPTIONS = {
+    "lowincome": "low-income, high risk, socially connected",
+    "middleclass": "middle-class, low risk, socially average",
+    "retired": "retired, high risk, socially limited",
+    "underemployed": "under-employed, medium risk, socially connected",
+    "highincome": "high-income, medium risk, socially active",
+    "student": "student, low risk, socially connected",
+}
 
 # Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
 _archetype_template = load_instructions("prompts/archetype_template.txt")
 _emergency_phases = load_text("prompts/emergency_plan.txt")
-_archetype_generation_prompt = load_text("prompts/archetype_generation_prompt.txt")
 
-for archetype in personality_archetypes:
-    arche_desc = personality_archetypes[archetype]
+# Generate agents based on archetype counts (deterministic distribution)
+agent_counter = 0
+for archetype, count in ARCHETYPE_COUNTS.items():
+    arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
     instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc).replace("{EMERGENCY_PHASES}", _emergency_phases)
 
-    agent = LlmAgent(
-        name=archetype,
-        model="gemini-2.0-flash",
-        instruction=instruction_text,
-        description=f"{archetype} population subset description",
-        output_key=f"{archetype}_key",
-        # 👇 Enforce detailed persona output with phase responses
-        output_schema=PersonaDetailedSchema,
-    )
-    sub_agents.append(agent)
-
-    # ---------------------------------------------
-
-
-# 2) Batch fan-out into small ParallelAgent "waves"
-#    (keeps stock ADK; reduces 429s & blast radius)
-# ---------------------------------------------
-def chunk(lst, n):
-    for i in range(0, len(lst), n):
-        yield lst[i : i + n]
-
-
-WAVE_SIZE = 6  # tune: 6–8 is a good start
-review_waves = []
-for i, wave_agents in enumerate(chunk(sub_agents, WAVE_SIZE), start=1):
-    review_waves.append(
-        ParallelAgent(
-            name=f"subset_wave_{i}",
-            sub_agents=wave_agents,
-            description=f"subset wave #{i} (size={len(wave_agents)})",
+    for i in range(count):
+        agent_counter += 1
+        agent = LlmAgent(
+            name=f"{archetype}_{i+1}",
+            model="gemini-2.0-flash",
+            instruction=instruction_text,
+            description=f"{archetype} population subset description",
+            output_key=f"{archetype}_{i+1}_key",
+            # 👇 Enforce detailed persona output with phase responses
+            output_schema=PersonaDetailedSchema,
         )
-    )
+        sub_agents.append(agent)
+
+# Total agents: sum of all archetype counts (50 personas)
+print(f"Generated {agent_counter} persona agents")
+
+
+# Single ParallelAgent for all personas (FASTER than waves)
+all_personas_agent = ParallelAgent(
+    name="all_personas",
+    sub_agents=sub_agents,
+    description=f"All {len(sub_agents)} persona agents running in parallel",
+)
 
 
 # --- Output schema for the merger (the big final object you already use) ---
@@ -94,13 +102,13 @@ merger_agent = LlmAgent(
     output_key="final_summary",
 )
 
-# --- Sequential Pipeline (unchanged pattern) ---
-# Just insert the waves instead of one massive parallel.
+# --- Sequential Pipeline (optimized for speed) ---
+# Single parallel execution of all personas, then merger
 sequential_pipeline_agent = SequentialAgent(
     name="FinalAnalysisAgent",
     sub_agents=[
-        *review_waves,  # Phase 2: multiple small ParallelAgent batches
-        merger_agent,  # Phase 3
+        all_personas_agent,  # Phase 1: All personas in parallel (faster!)
+        merger_agent,        # Phase 2: Merge all responses
     ],
     description="Coordinates the creation of agents and summarization of reactions to hurricane",
 )
