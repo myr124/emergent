@@ -10,10 +10,11 @@ so you can inspect basic metadata.
 
 from typing import Any, Dict, Optional
 import os
+import json
 from importlib.machinery import SourceFileLoader
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import httpx
@@ -50,6 +51,34 @@ async def health_check():
     return {"status": "healthy"}
 
 
+@app.post("/upload")
+async def upload_file(
+    file: UploadFile = File(...),
+    app_name: str = Form("multi-persona-agent"),
+    user_id: str = Form("user"),
+    payload: str = Form(None),
+):
+    """
+    Receive a multipart/form-data upload. 'file' contains the file contents.
+    Optional form fields: app_name, user_id. Optional 'payload' can be a JSON string.
+    """
+    content = await file.read()
+    # If payload JSON was provided as a form field, parse it
+    parsed_payload = None
+    if payload:
+        try:
+            parsed_payload = json.loads(payload)
+        except Exception:
+            parsed_payload = {"raw": payload}
+    return {
+        "filename": file.filename,
+        "size": len(content),
+        "app_name": app_name,
+        "user_id": user_id,
+        "payload": parsed_payload,
+    }
+
+
 # Pydantic model to accept JSON body for /simulate-flow.
 # Using a model provides validation and automatic OpenAPI docs.
 class SimulatePayload(BaseModel):
@@ -65,6 +94,10 @@ class SimulatePayload(BaseModel):
 async def simulate_flow(
     request: Request,
     payload: Optional[SimulatePayload] = None,
+    file: UploadFile = File(None),
+    form_app_name: Optional[str] = Form(None),
+    form_user_id: Optional[str] = Form(None),
+    form_payload: Optional[str] = Form(None),
     app_name: str = "multi-persona-agent",
     user_id: str = "user",
 ):
@@ -87,9 +120,50 @@ async def simulate_flow(
         Fields in that JSON (app_name, user_id, new_message, streaming) will override the
         corresponding query parameters.
       - You can still call this endpoint using query parameters (existing behavior).
+      - This handler also accepts multipart/form-data (file + form fields). If a multipart
+        request is received, form fields (form_app_name, form_user_id, form_payload) or a
+        JSON file upload will be used to populate the same parameters.
     """
-    # If a JSON body was provided, prefer its values over query params.
-    if payload:
+    # Support either JSON body (SimulatePayload) OR multipart/form-data with UploadFile/Form fields.
+    # Priority:
+    # 1) If multipart/form-data with file or form_payload is provided, use form values or parsed file content.
+    # 2) Else if JSON body (payload) is provided, use payload fields.
+    # 3) Else fall back to query params (app_name, user_id).
+    parsed_form_payload = None
+
+    if file is not None:
+        # Prefer an explicit JSON form field if provided.
+        if form_payload:
+            try:
+                parsed_form_payload = json.loads(form_payload)
+            except Exception:
+                parsed_form_payload = {"raw": form_payload}
+        else:
+            # Try to parse uploaded file contents as JSON (useful if the client uploaded a .json payload).
+            try:
+                content_bytes = await file.read()
+                content_text = content_bytes.decode("utf-8")
+                parsed = json.loads(content_text)
+                if isinstance(parsed, dict):
+                    parsed_form_payload = parsed
+            except Exception:
+                parsed_form_payload = None
+
+        if parsed_form_payload:
+            # Override app/user from parsed payload or explicit form fields
+            app_name = parsed_form_payload.get("app_name", form_app_name or app_name)
+            user_id = parsed_form_payload.get("user_id", form_user_id or user_id)
+            payload = SimulatePayload(
+                app_name=parsed_form_payload.get("app_name"),
+                user_id=parsed_form_payload.get("user_id"),
+                new_message=parsed_form_payload.get("new_message"),
+                streaming=parsed_form_payload.get("streaming"),
+            )
+        else:
+            # Use explicit form fields if present
+            app_name = form_app_name or app_name
+            user_id = form_user_id or user_id
+    elif payload:
         app_name = payload.app_name or app_name
         user_id = payload.user_id or user_id
 

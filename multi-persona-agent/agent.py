@@ -107,6 +107,7 @@ if remaining > 0:
 
 # Generate agents based on calculated archetype counts
 agent_counter = 0
+output_keys = []
 for archetype, count in archetype_counts.items():
     arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
     instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
@@ -123,6 +124,7 @@ for archetype, count in archetype_counts.items():
             output_schema=PersonaDetailedSchema,
         )
         sub_agents.append(agent)
+        output_keys.append(f"{archetype}_{i + 1}_key")
 
 # Total agents: sum of all archetype counts
 print(f"Generated {agent_counter} persona agents from {TOTAL_AGENTS} requested")
@@ -137,35 +139,4 @@ all_personas_agent = ParallelAgent(
 )
 
 
-# --- Output schema for the merger (the big final object you already use) ---
-class outputSchema(BaseModel):
-    output: str = Field(description="test")
-
-
-# --- Merger Agent ---
-# TIP in your synthesis_prompt.txt:
-# - Read only persona keys that end with "_review".
-# - Ignore any missing keys (some personas may fail).
-# - Produce exactly ONE final JSON into output_key="final_summary".
-merger_agent = LlmAgent(
-    name="merger_agent",
-    model="gemini-2.5-flash-lite",
-    instruction=load_instructions("prompts/summarizer_instructions.txt"),
-    description="Summarizes the entire sentiment of all population subsets",
-    output_schema=outputSchema,
-    output_key="final_summary",
-)
-
-# --- Sequential Pipeline (optimized for speed) ---
-# Single parallel execution of all personas, then merger
-sequential_pipeline_agent = SequentialAgent(
-    name="scenario_pipeline_timeline",
-    sub_agents=[
-        all_personas_agent,  # Phase 1: All personas in parallel (faster!)
-        merger_agent,  # Phase 2: Merge all responses
-    ],
-    description="Condensed 12-period timeline pipeline (one agent per persona)",
-)
-
-
-root_agent = sequential_pipeline_agent
+root_agent = all_personas_agent

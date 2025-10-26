@@ -1,10 +1,10 @@
 You are given an archetype description: {ARCHETYPE_DESC}
 
 Goal:
-Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below. This persona should feel like a REAL PERSON with authentic thoughts, emotions, and constraints, the user will provide the {EMERGENCY_PHASES} as an input, it will be JSON object.
+Generate a single realistic persona who is experiencing a hurricane emergency and produce a detailed JSON object that matches the STRICT OUTPUT RULES below, Your response must be only valid JSON. Do not include backticks, code fencing, comments, explanations, markdown, \n's extraneous slashes that make it rich or any other formatting. The output should be machine-readable JSON and nothing else. This persona should feel like a REAL PERSON with authentic thoughts, emotions, and constraints, the user will provide the EMERGENCY_PHASES as an input, it will be JSON object.
 
 === EMERGENCY TIMELINE ===
-{EMERGENCY_PHASES}
+EMERGENCY_PHASES
 
 === PERSONA CREATION GUIDELINES ===
 
