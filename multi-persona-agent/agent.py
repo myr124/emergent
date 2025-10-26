@@ -55,7 +55,7 @@ sub_agents: List[LlmAgent] = []
 
 
 # Total number of agents to generate
-TOTAL_AGENTS = 20
+TOTAL_AGENTS = 50
 
 # Archetype proportions (percentages as decimals: 0.30 = 30%, 0.05 = 5%)
 # Note: These should sum to approximately 1.0 (100%)
