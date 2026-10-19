@@ -2,9 +2,59 @@
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import React, { useState } from "react";
-import { ApiLoadingAnimation } from "./ApiLoadingAnimation";
+import { ApiLoadingAnimation, type SimulationProgress } from "./ApiLoadingAnimation";
 import { useRouter } from "next/navigation";
 import type { EmergencyPlan } from "@/lib/utils/emergencyPlan";
+
+const SIM_BACKEND_URL =
+  process.env.NEXT_PUBLIC_SIM_BACKEND_URL ?? 'https://knighthacks2025backend.onrender.com';
+const POLL_INTERVAL_MS = 1500;
+const POLL_TIMEOUT_MS = 10 * 60 * 1000;
+
+interface SimulationStatus {
+  sim_id: string;
+  status: 'running' | 'completed' | 'partial' | 'failed';
+  total: number;
+  completed: number;
+  failed: number;
+  cache_hits: number;
+  errors?: Record<string, string>;
+  list_sessions?: unknown[];
+}
+
+async function runQueuedSimulation(
+  prompt: string,
+  onProgress: (progress: SimulationProgress) => void
+): Promise<SimulationStatus> {
+  const report = (s: SimulationStatus) =>
+    onProgress({ completed: s.completed, failed: s.failed, total: s.total, cacheHits: s.cache_hits });
+
+  const created = await fetch(`${SIM_BACKEND_URL}/simulations`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ prompt }),
+  });
+  if (!created.ok) {
+    throw new Error(`API request failed with status: ${created.status}`);
+  }
+
+  let status: SimulationStatus = await created.json();
+  const deadline = Date.now() + POLL_TIMEOUT_MS;
+  while (status.status === 'running') {
+    report(status);
+    if (Date.now() > deadline) {
+      throw new Error('Simulation timed out');
+    }
+    await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+    const polled = await fetch(`${SIM_BACKEND_URL}/simulations/${status.sim_id}`);
+    if (!polled.ok) {
+      throw new Error(`API request failed with status: ${polled.status}`);
+    }
+    status = await polled.json();
+  }
+  report(status);
+  return status;
+}
 
 const TTX_SCRIPT = `Hurricane Cronus – Tabletop Exercise (TTX)
 A Test of Dynamic Response and Population-Centric Planning
@@ -173,6 +223,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ selectedPlan }) => {
   const [prompt, setPrompt] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [progress, setProgress] = useState<SimulationProgress | null>(null);
   const router = useRouter();
 
   const handleStart = async () => {
@@ -182,30 +233,24 @@ const ChatBox: React.FC<ChatBoxProps> = ({ selectedPlan }) => {
     }
 
     setIsLoading(true);
+    setProgress(null);
 
     try {
       // Convert the selected plan to a formatted JSON string for the prompt
       const promptData = JSON.stringify(selectedPlan, null, 2);
 
-      const response = await fetch(
-        'https://knighthacks2025backend.onrender.com/simulate-flow',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            prompt: promptData,
-          }),
-        }
-      );
-
-      if (!response.ok) {
-        throw new Error(`API request failed with status: ${response.status}`);
-      }
-
-      const data = await response.json();
+      // Queue the run: the backend fans it out to one job per persona and a
+      // worker pool runs them, so we poll for progress instead of holding a request open.
+      const data = await runQueuedSimulation(promptData, setProgress);
       console.log('API Response:', data);
+
+      if (data.status === 'failed') {
+        const firstError = Object.values(data.errors ?? {})[0];
+        throw new Error(`All personas failed${firstError ? `: ${firstError}` : ''}`);
+      }
+      if (data.status === 'partial') {
+        console.warn(`${data.failed} of ${data.total} personas failed:`, data.errors);
+      }
 
       // Store the response and navigate to simulation
       localStorage.setItem('scenarioData', JSON.stringify(data));
@@ -222,7 +267,7 @@ const ChatBox: React.FC<ChatBoxProps> = ({ selectedPlan }) => {
 
   return (
     <>
-      {isLoading && <ApiLoadingAnimation />}
+      {isLoading && <ApiLoadingAnimation progress={progress} />}
       <div className="absolute left-0 right-0 bottom-10 flex flex-col items-center gap-2 pointer-events-none">
         {!selectedPlan && (
           <p className="text-sm text-muted-foreground font-mono">

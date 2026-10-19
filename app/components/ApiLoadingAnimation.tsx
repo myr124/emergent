@@ -2,7 +2,17 @@
 
 import { motion } from "framer-motion";
 
-export function ApiLoadingAnimation() {
+export interface SimulationProgress {
+  completed: number;
+  failed: number;
+  total: number;
+  cacheHits: number;
+}
+
+export function ApiLoadingAnimation({ progress }: { progress?: SimulationProgress | null }) {
+  const finished = progress ? progress.completed + progress.failed : 0;
+  const percent = progress && progress.total > 0 ? (finished / progress.total) * 100 : 0;
+
   return (
     <div className="fixed inset-0 z-[9999] bg-background/95 backdrop-blur-sm flex items-center justify-center">
       <div className="flex flex-col items-center gap-8">
@@ -84,7 +94,10 @@ export function ApiLoadingAnimation() {
           </motion.h2>
           <div className="flex items-center justify-center gap-2">
             <span className="text-sm text-muted-foreground">
-              Connecting to ADK backend
+              {progress
+                ? `${finished}/${progress.total} personas responded` +
+                  (progress.cacheHits > 0 ? ` (${progress.cacheHits} from cache)` : "")
+                : "Connecting to ADK backend"}
             </span>
             {[0, 1, 2].map((index) => (
               <motion.span
@@ -108,18 +121,27 @@ export function ApiLoadingAnimation() {
         </div>
 
         {/* Progress bar */}
-        <div className="w-96 h-2 bg-muted rounded-full overflow-hidden">
-          <motion.div
-            className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
-            animate={{
-              x: ["-100%", "200%"],
-            }}
-            transition={{
-              duration: 2,
-              repeat: Infinity,
-              ease: "easeInOut",
-            }}
-          />
+        <div className="w-96 max-w-[calc(100vw-2rem)] h-2 bg-muted rounded-full overflow-hidden">
+          {progress ? (
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
+              initial={false}
+              animate={{ width: `${percent}%` }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
+            />
+          ) : (
+            <motion.div
+              className="h-full bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"
+              animate={{
+                x: ["-100%", "200%"],
+              }}
+              transition={{
+                duration: 2,
+                repeat: Infinity,
+                ease: "easeInOut",
+              }}
+            />
+          )}
         </div>
       </div>
     </div>
