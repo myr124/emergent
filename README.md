@@ -70,6 +70,23 @@ Follow these instructions to get a local copy of the project up and running for 
 
     Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
+### Running the simulation backend
+
+The persona agents live in `backend/` (Python, Google ADK). Simulations run on a Redis queue drained by a worker pool, and the frontend talks to it at `NEXT_PUBLIC_SIM_BACKEND_URL`.
+
+```sh
+docker run -d --name emergent-redis -p 6379:6379 redis:7-alpine
+
+cd backend
+python -m venv .venv && .venv/bin/pip install -r requirements.txt
+echo 'GOOGLE_API_KEY="YOUR_API_KEY_HERE"' > .env
+
+.venv/bin/uvicorn main:app --port 8000      # API
+.venv/bin/python -m simqueue.worker          # worker pool, in another terminal
+```
+
+Then add `NEXT_PUBLIC_SIM_BACKEND_URL=http://localhost:8000` to `.env.local`. Backend tests: `cd backend && .venv/bin/pip install pytest pytest-asyncio && .venv/bin/python -m pytest` (needs Redis).
+
 ### Other Scripts
 
 - **Build for production:**

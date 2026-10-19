@@ -32,7 +32,7 @@ AGENT_PY_PATH = os.path.join(AGENT_DIR, "multi-persona-agent")
 load_dotenv(os.path.join(AGENT_DIR, ".env"))
 
 # Simple SQLite-backed session DB (dev)
-SESSION_DB_PATH = os.path.abspath(os.path.join(BASE_DIR, "..", "sessions.db"))
+SESSION_DB_PATH = os.path.join(BASE_DIR, "sessions.db")
 SESSION_DB_URL = f"sqlite:///{SESSION_DB_PATH}"
 
 # Delegate to ADK's fast API builder. It will register endpoints like /chat, /stream,
