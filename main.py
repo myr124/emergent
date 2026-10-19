@@ -44,6 +44,12 @@ app: FastAPI = get_fast_api_app(
     web=True,  # Enable the ADK Web UI
 )
 
+# Queued simulations: POST /simulations, GET /simulations/{id}, GET /queue/stats.
+# Persona runs execute in the worker pool (python -m simqueue.worker), not here.
+from simqueue.api import router as simulation_router
+
+app.include_router(simulation_router)
+
 
 @app.get("/health")
 async def health_check():

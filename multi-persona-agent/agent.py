@@ -105,26 +105,48 @@ if remaining > 0:
         archetype = remainders[i][0]
         archetype_counts[archetype] += 1
 
-# Generate agents based on calculated archetype counts
-agent_counter = 0
-output_keys = []
+PERSONA_MODEL = "gemini-2.0-flash"
+
+# One spec per persona agent, keyed by agent name (e.g. "lowincome_3").
+# The queue workers build a standalone agent from a spec for each job, so
+# every persona can run (and be cached) independently.
+PERSONA_SPECS: Dict[str, Dict[str, str]] = {}
 for archetype, count in archetype_counts.items():
     arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
     instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
 
     for i in range(count):
-        agent_counter += 1
-        agent = LlmAgent(
-            name=f"{archetype}_{i + 1}",
-            model="gemini-2.0-flash",
-            instruction=instruction_text,
-            description=f"{archetype} population subset description",
-            output_key=f"{archetype}_{i + 1}_key",
-            # 👇 Enforce detailed persona output with phase responses
-            output_schema=PersonaDetailedSchema,
-        )
-        sub_agents.append(agent)
-        output_keys.append(f"{archetype}_{i + 1}_key")
+        PERSONA_SPECS[f"{archetype}_{i + 1}"] = {
+            "archetype": archetype,
+            "model": PERSONA_MODEL,
+            "instruction": instruction_text,
+            "output_key": f"{archetype}_{i + 1}_key",
+        }
+
+
+def build_persona_agent(name: str) -> LlmAgent:
+    spec = PERSONA_SPECS[name]
+    return LlmAgent(
+        name=name,
+        model=spec["model"],
+        instruction=spec["instruction"],
+        description=f"{spec['archetype']} population subset description",
+        output_key=spec["output_key"],
+        # 👇 Enforce detailed persona output with phase responses
+        output_schema=PersonaDetailedSchema,
+        # ADK forces these on when output_schema is set; being explicit avoids a warning per agent.
+        disallow_transfer_to_parent=True,
+        disallow_transfer_to_peers=True,
+    )
+
+
+# Generate agents based on calculated archetype counts
+agent_counter = 0
+output_keys = []
+for name, spec in PERSONA_SPECS.items():
+    agent_counter += 1
+    sub_agents.append(build_persona_agent(name))
+    output_keys.append(spec["output_key"])
 
 # Total agents: sum of all archetype counts
 print(f"Generated {agent_counter} persona agents from {TOTAL_AGENTS} requested")
