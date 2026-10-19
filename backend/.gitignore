@@ -1,0 +1,7 @@
+# Environment variables
+.env
+.env.*
+multi-persona-agent/__pycache__/
+.venv/
+.pytest_cache/
+__pycache__/
