@@ -1,0 +1,164 @@
+import json
+import hashlib
+import random
+from typing import Any, Dict, List
+
+from pydantic import Field, BaseModel
+from google.adk.agents import Agent, LlmAgent, ParallelAgent, SequentialAgent
+from pydantic import BaseModel
+from typing import List, Dict, Literal
+import os
+from .utils import load_instructions, format_phases_for_prompt, load_text
+
+
+# Steps
+# 1. Generate 50 personas of varying archetypes
+# 2. Each of these personas should have some opinion on the state of the hurricane
+#
+class PhaseResponse(BaseModel):
+    decision: Literal[
+        "stay_home",
+        "evacuate",
+        "shelter_in_place",
+        "help_neighbors",
+        "gather_info",
+        "wait_and_see",
+    ]
+    sentiment: Literal[
+        "calm", "concerned", "anxious", "panicked", "skeptical", "defiant"
+    ]
+    location: Literal["home", "evacuating", "shelter", "with_family", "helping_others"]
+    actions_taken: List[str] = Field(
+        description="Bullet points of actions taken during this phase"
+    )
+    personality_reasoning: str = Field(
+        description="1-2 sentences explaining why this persona made these decisions"
+    )
+
+
+class PersonaDetailedSchema(BaseModel):
+    race: str
+    age: int
+    sex: str
+    bio: str = Field(
+        description="Detailed biography including occupation, family, housing, resources"
+    )
+    representation: float = Field(
+        description="Estimated % of population this persona represents (0-100)"
+    )
+    response: List[PhaseResponse] = Field(
+        description="Array of phase responses in chronological order (index 0 = phase 1, index 1 = phase 2, etc.)"
+    )
+
+
+sub_agents: List[LlmAgent] = []
+
+
+# Total number of agents to generate
+TOTAL_AGENTS = 50
+
+# Archetype proportions (percentages as decimals: 0.30 = 30%, 0.05 = 5%)
+# Note: These should sum to approximately 1.0 (100%)
+ARCHETYPE_PROPORTIONS = {
+    "lowincome": 0.30,  # 30% of population
+    "middleclass": 0.24,  # 24% of population
+    "retired": 0.20,  # 20% of population
+    "underemployed": 0.16,  # 16% of population
+    "highincome": 0.06,  # 6% of population
+    "student": 0.04,  # 4% of population
+}
+
+# Archetype descriptions
+ARCHETYPE_DESCRIPTIONS = {
+    "lowincome": "low-income, high risk, socially connected",
+    "middleclass": "middle-class, low risk, socially average",
+    "retired": "retired, high risk, socially limited",
+    "underemployed": "under-employed, medium risk, socially connected",
+    "highincome": "high-income, medium risk, socially active",
+    "student": "student, low risk, socially connected",
+}
+
+# Load the archetype template once and render per-archetype by replacing {ARCHETYPE_DESC} and {EMERGENCY_PHASES}
+_archetype_template = load_instructions("prompts/archetype_template.txt")
+
+
+# Calculate actual counts from proportions
+archetype_counts = {}
+agents_allocated = 0
+
+# First pass: calculate counts using floor
+for archetype, proportion in ARCHETYPE_PROPORTIONS.items():
+    count = int(TOTAL_AGENTS * proportion)
+    archetype_counts[archetype] = count
+    agents_allocated += count
+
+# Second pass: distribute remaining agents to archetypes with largest remainders
+remaining = TOTAL_AGENTS - agents_allocated
+if remaining > 0:
+    remainders = [
+        (archetype, (TOTAL_AGENTS * proportion) - archetype_counts[archetype])
+        for archetype, proportion in ARCHETYPE_PROPORTIONS.items()
+    ]
+    remainders.sort(key=lambda x: x[1], reverse=True)
+
+    for i in range(remaining):
+        archetype = remainders[i][0]
+        archetype_counts[archetype] += 1
+
+PERSONA_MODEL = "gemini-2.0-flash"
+
+# One spec per persona agent, keyed by agent name (e.g. "lowincome_3").
+# The queue workers build a standalone agent from a spec for each job, so
+# every persona can run (and be cached) independently.
+PERSONA_SPECS: Dict[str, Dict[str, str]] = {}
+for archetype, count in archetype_counts.items():
+    arche_desc = ARCHETYPE_DESCRIPTIONS[archetype]
+    instruction_text = _archetype_template.replace("{ARCHETYPE_DESC}", arche_desc)
+
+    for i in range(count):
+        PERSONA_SPECS[f"{archetype}_{i + 1}"] = {
+            "archetype": archetype,
+            "model": PERSONA_MODEL,
+            "instruction": instruction_text,
+            "output_key": f"{archetype}_{i + 1}_key",
+        }
+
+
+def build_persona_agent(name: str) -> LlmAgent:
+    spec = PERSONA_SPECS[name]
+    return LlmAgent(
+        name=name,
+        model=spec["model"],
+        instruction=spec["instruction"],
+        description=f"{spec['archetype']} population subset description",
+        output_key=spec["output_key"],
+        # 👇 Enforce detailed persona output with phase responses
+        output_schema=PersonaDetailedSchema,
+        # ADK forces these on when output_schema is set; being explicit avoids a warning per agent.
+        disallow_transfer_to_parent=True,
+        disallow_transfer_to_peers=True,
+    )
+
+
+# Generate agents based on calculated archetype counts
+agent_counter = 0
+output_keys = []
+for name, spec in PERSONA_SPECS.items():
+    agent_counter += 1
+    sub_agents.append(build_persona_agent(name))
+    output_keys.append(spec["output_key"])
+
+# Total agents: sum of all archetype counts
+print(f"Generated {agent_counter} persona agents from {TOTAL_AGENTS} requested")
+print(f"Distribution: {archetype_counts}")
+
+
+# Single ParallelAgent for all personas (FASTER than waves)
+all_personas_agent = ParallelAgent(
+    name="all_personas",
+    sub_agents=sub_agents,
+    description=f"All {len(sub_agents)} persona agents running in parallel",
+)
+
+
+root_agent = all_personas_agent

@@ -1,0 +1,701 @@
+{
+  "scenarioId": "550e8400-e29b-41d4-a716-446655440001",
+  "scenarioType": "hurricane",
+  "location": "Orange County, FL",
+  "totalOperationalPeriods": 13,
+  "actionPlan": {
+    "periods": [
+      {
+        "periodNumber": 1,
+        "startTime": "T-72h",
+        "endTime": "T-60h",
+        "phase": "planning",
+        "injects": [
+          {
+            "id": "inject-1-1",
+            "time": "T-72h",
+            "type": "weather_update",
+            "title": "Category 4 Hurricane Warning Issued",
+            "description": "Category 4 Hurricane approaching. Landfall expected Thursday morning.",
+            "severity": "high"
+          },
+          {
+            "id": "inject-1-2",
+            "time": "T-70h",
+            "type": "public_behavior",
+            "title": "Residents Beginning Emergency Preparations",
+            "description": "Storm warning issued. People beginning to prepare. Stores experiencing increased traffic.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-1-1",
+            "time": "T-72h",
+            "actionType": "public_announcement",
+            "details": "Gather emergency supplies (water, food, medications, batteries), fill gas tanks, check evacuation zone, review emergency plans.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-1-2",
+            "time": "T-72h",
+            "actionType": "resource_distribution",
+            "details": "Free sandbags available at county parks. Emergency info: Call 311.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 2,
+        "startTime": "T-60h",
+        "endTime": "T-48h",
+        "phase": "planning",
+        "injects": [
+          {
+            "id": "inject-2-1",
+            "time": "T-60h",
+            "type": "weather_update",
+            "title": "Storm Intensifies to 145 mph Winds",
+            "description": "Hurricane now at 145 mph winds, continuing to strengthen.",
+            "severity": "high"
+          },
+          {
+            "id": "inject-2-2",
+            "time": "T-58h",
+            "type": "public_behavior",
+            "title": "Stores Getting Crowded",
+            "description": "Some people evacuating, most still preparing. Stores getting crowded.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-2-1",
+            "time": "T-60h",
+            "actionType": "evacuation_order",
+            "zone": "Zone A",
+            "urgency": "voluntary",
+            "details": "Zone A (flood areas, mobile homes) voluntary evacuation recommended.",
+            "targetPopulation": "Coastal residents, mobile homes, flood-prone areas"
+          },
+          {
+            "id": "action-2-2",
+            "time": "T-60h",
+            "actionType": "shelter",
+            "details": "Shelters opening at Convention Center, UCF Gymnasium, High Schools on Tuesday morning with pet-friendly sections available.",
+            "targetPopulation": "General public"
+          },
+          {
+            "id": "action-2-3",
+            "time": "T-55h",
+            "actionType": "resource_distribution",
+            "details": "15,000 sandbags distributed to residents.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 3,
+        "startTime": "T-48h",
+        "endTime": "T-36h",
+        "phase": "preparation",
+        "injects": [
+          {
+            "id": "inject-3-1",
+            "time": "T-48h",
+            "type": "weather_update",
+            "title": "Hurricane Warning Issued",
+            "description": "Storm maintaining Category 4 strength. Hurricane warning now in effect.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-3-2",
+            "time": "T-44h",
+            "type": "infrastructure",
+            "title": "Gas Stations Getting Busy",
+            "description": "Gas stations getting busy with no shortages yet. Some people still working, delaying preparations.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-3-1",
+            "time": "T-48h",
+            "actionType": "evacuation_order",
+            "zone": "Zone A",
+            "urgency": "mandatory",
+            "details": "Zone A mandatory evacuation (must leave by 6pm today). All mobile homes mandatory evacuation.",
+            "targetPopulation": "Zone A residents, all mobile homes"
+          },
+          {
+            "id": "action-3-2",
+            "time": "T-48h",
+            "actionType": "evacuation_order",
+            "zone": "Zone B",
+            "urgency": "voluntary",
+            "details": "Zone B voluntary evacuation issued.",
+            "targetPopulation": "Zone B residents"
+          },
+          {
+            "id": "action-3-3",
+            "time": "T-48h",
+            "actionType": "shelter",
+            "details": "Shelters now open at Convention Center and schools. Free buses from Camping World Stadium every 2 hours. Currently 2,800 people in shelters, 850 evacuated by bus.",
+            "targetPopulation": "General public"
+          },
+          {
+            "id": "action-3-4",
+            "time": "T-48h",
+            "actionType": "closure",
+            "details": "Schools closed Wed-Fri. Airport closes Wednesday evening. Theme parks closing Wednesday afternoon.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 4,
+        "startTime": "T-36h",
+        "endTime": "T-24h",
+        "phase": "preparation",
+        "injects": [
+          {
+            "id": "inject-4-1",
+            "time": "T-36h",
+            "type": "forecast_change",
+            "title": "Storm Moving Faster",
+            "description": "Storm moving faster, landfall now expected Thursday 3am (12 hours earlier than expected).",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-4-2",
+            "time": "T-32h",
+            "type": "infrastructure",
+            "title": "Resource Shortages Beginning",
+            "description": "Stores running out of water and bread. 25% of gas stations low on fuel.",
+            "severity": "high"
+          },
+          {
+            "id": "inject-4-3",
+            "time": "T-30h",
+            "type": "public_behavior",
+            "title": "Theme Park Workers Losing Shifts",
+            "description": "Theme park workers losing shifts. People with pets seeking pet-friendly shelters.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-4-1",
+            "time": "T-36h",
+            "actionType": "evacuation_order",
+            "zone": "Zone A",
+            "urgency": "mandatory",
+            "details": "Zone A mandatory (deadline TODAY - last buses leave 8pm).",
+            "targetPopulation": "Zone A residents"
+          },
+          {
+            "id": "action-4-2",
+            "time": "T-36h",
+            "actionType": "evacuation_order",
+            "zone": "Zone B",
+            "urgency": "mandatory",
+            "details": "Zone B mandatory (deadline Wednesday noon).",
+            "targetPopulation": "Zone B residents"
+          },
+          {
+            "id": "action-4-3",
+            "time": "T-36h",
+            "actionType": "evacuation_order",
+            "zone": "Zone C",
+            "urgency": "voluntary",
+            "details": "Zone C voluntary evacuation issued.",
+            "targetPopulation": "Zone C residents"
+          },
+          {
+            "id": "action-4-4",
+            "time": "T-36h",
+            "actionType": "public_announcement",
+            "details": "Curfew starts Wednesday 8pm through Friday 6am announced.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-4-5",
+            "time": "T-32h",
+            "actionType": "shelter",
+            "details": "4,200 people in shelters (44% full). More shelters opening Wednesday. 1,400 more people sheltered, 1,200 evacuated by bus.",
+            "targetPopulation": "General public"
+          }
+        ]
+      },
+      {
+        "periodNumber": 5,
+        "startTime": "T-24h",
+        "endTime": "T-12h",
+        "phase": "preparation",
+        "injects": [
+          {
+            "id": "inject-5-1",
+            "time": "T-24h",
+            "type": "weather_update",
+            "title": "Final Evacuation Window Warning",
+            "description": "This is the last safe chance to evacuate. Heavy traffic northbound with travel time doubled.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-5-2",
+            "time": "T-20h",
+            "type": "infrastructure",
+            "title": "Critical Resource Shortages",
+            "description": "45% of gas stations out of fuel. 80% of stores out of water and bread.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-5-3",
+            "time": "T-18h",
+            "type": "public_behavior",
+            "title": "Vulnerable Populations Struggling",
+            "description": "Late evacuees facing gas shortages. Low-income families stressed by costs. Elderly having mobility challenges. Essential workers required to stay at jobs. Some people don't understand evacuation warnings (language barriers).",
+            "severity": "high"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-5-1",
+            "time": "T-24h",
+            "actionType": "evacuation_order",
+            "zone": "Zone A",
+            "urgency": "mandatory",
+            "details": "Zone A must be evacuated (no emergency response after noon).",
+            "targetPopulation": "Zone A residents"
+          },
+          {
+            "id": "action-5-2",
+            "time": "T-24h",
+            "actionType": "evacuation_order",
+            "zone": "Zone B",
+            "urgency": "mandatory",
+            "details": "Zone B must evacuate by noon.",
+            "targetPopulation": "Zone B residents"
+          },
+          {
+            "id": "action-5-3",
+            "time": "T-24h",
+            "actionType": "evacuation_order",
+            "zone": "Zone C",
+            "urgency": "mandatory",
+            "details": "Zone C mandatory evacuation (deadline 6pm).",
+            "targetPopulation": "Zone C residents - approximately 100,000 residents"
+          },
+          {
+            "id": "action-5-4",
+            "time": "T-24h",
+            "actionType": "public_announcement",
+            "details": "Last safe travel before 2pm. Expect widespread power outages lasting 3-7 days.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-5-5",
+            "time": "T-20h",
+            "actionType": "shelter",
+            "details": "6,800 people in shelters (72% full). Pet sections nearly full. 2,600 more people sheltered, 1,850 evacuated by bus.",
+            "targetPopulation": "General public"
+          }
+        ]
+      },
+      {
+        "periodNumber": 6,
+        "startTime": "T-12h",
+        "endTime": "T-0h",
+        "phase": "response",
+        "injects": [
+          {
+            "id": "inject-6-1",
+            "time": "T-12h",
+            "type": "weather_update",
+            "title": "Final Warning - Too Late to Evacuate",
+            "description": "Storm arrives tonight 10pm. Hurricane winds 3am-noon Thursday. Too dangerous to travel.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-6-2",
+            "time": "T-10h",
+            "type": "infrastructure",
+            "title": "Critical Infrastructure Closures",
+            "description": "Airport closed. 60% of gas stations empty.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-6-3",
+            "time": "T-8h",
+            "type": "public_behavior",
+            "title": "People Trapped, Emergency Situations",
+            "description": "People who delayed now trapped. Hospital workers locked down at work. Families separated. Mobile home residents in extreme danger.",
+            "severity": "critical"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-6-1",
+            "time": "T-12h",
+            "actionType": "public_announcement",
+            "details": "Evacuations ended. If not evacuated, shelter at home now. Curfew now in effect through Friday 6am.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-6-2",
+            "time": "T-12h",
+            "actionType": "emergency_response",
+            "details": "No 911 response after 8pm tonight until winds drop. Call 911 only for life-threatening emergencies (crews cannot respond until safe).",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-6-3",
+            "time": "T-12h",
+            "actionType": "shelter",
+            "details": "Shelters closed to new arrivals. 8,100 people inside. 1,300 more people sheltered. Last 950 evacuated by emergency buses.",
+            "targetPopulation": "General public"
+          },
+          {
+            "id": "action-6-4",
+            "time": "T-12h",
+            "actionType": "public_announcement",
+            "details": "Stay indoors in interior room away from windows. Do not go outside during eye of storm. Current status: 35,000 evacuated out of county, 8,100 in shelters, 1.2 million sheltering at home.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 7,
+        "startTime": "T-0h",
+        "endTime": "T+12h",
+        "phase": "response",
+        "injects": [
+          {
+            "id": "inject-7-1",
+            "time": "T-0h",
+            "type": "weather_update",
+            "title": "Hurricane Making Landfall",
+            "description": "Peak winds happening now through noon. Winds 75-85 mph sustained with gusts to 120 mph, heavy rain, tornado warnings, flooding in low areas.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-7-2",
+            "time": "T+2h",
+            "type": "infrastructure",
+            "title": "Massive Power Outages",
+            "description": "520,000 without power (87% of county). Wind damage starting with trees and power lines down.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-7-3",
+            "time": "T+6h",
+            "type": "public_behavior",
+            "title": "Life-Threatening Situations",
+            "description": "Shelters cramped, people scared. People at home terrified by wind noise. Families with kids managing fear. Medical equipment losing power. Mobile home structures failing. Essential workers treating injuries despite storm.",
+            "severity": "critical"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-7-1",
+            "time": "T-0h",
+            "actionType": "emergency_response",
+            "details": "All crews sheltered. NO 911 response until safe (estimated 2pm).",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-7-2",
+            "time": "T-0h",
+            "actionType": "public_announcement",
+            "details": "Shelter in place in interior room on lowest floor. Cover with mattress if tornado warning. Do NOT go outside. Move up if flooding (not to attic - entrapment risk).",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 8,
+        "startTime": "T+12h",
+        "endTime": "T+24h",
+        "phase": "response",
+        "injects": [
+          {
+            "id": "inject-8-1",
+            "time": "T+12h",
+            "type": "weather_update",
+            "title": "Storm Exiting Area",
+            "description": "Hurricane downgraded, winds decreasing. Still dangerous.",
+            "severity": "high"
+          },
+          {
+            "id": "inject-8-2",
+            "time": "T+14h",
+            "type": "infrastructure",
+            "title": "Catastrophic Damage Assessment",
+            "description": "Widespread catastrophic damage: 487,000 without power (95% of county), roads blocked by trees and power lines, 200+ buildings severely damaged, 1,500+ trees down. Hazards include downed power lines, standing water, damaged buildings, gas leaks.",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-8-3",
+            "time": "T+18h",
+            "type": "public_behavior",
+            "title": "Casualties and Injuries",
+            "description": "During peak storm: terrifying winds, apartment roofs collapsing in some areas. Many mobile homes destroyed. 3,500+ emergency calls (most cannot be answered). Some people trapped by flooding (rescues Friday). 450+ injured.",
+            "severity": "critical"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-8-1",
+            "time": "T+12h",
+            "actionType": "public_announcement",
+            "details": "Curfew remains until Friday 6am. DO NOT go outside yet.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-8-2",
+            "time": "T+12h",
+            "actionType": "emergency_response",
+            "details": "Limited 911 for life-threatening emergencies only. Severe delays expected.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-8-3",
+            "time": "T+12h",
+            "actionType": "shelter",
+            "details": "Shelters remain open. Do not leave until Friday.",
+            "targetPopulation": "Sheltered residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 9,
+        "startTime": "T+24h",
+        "endTime": "T+36h",
+        "phase": "recovery",
+        "injects": [
+          {
+            "id": "inject-9-1",
+            "time": "T+24h",
+            "type": "weather_update",
+            "title": "Storm Cleared",
+            "description": "Storm cleared. Recovery operations begin.",
+            "severity": "medium"
+          },
+          {
+            "id": "inject-9-2",
+            "time": "T+26h",
+            "type": "infrastructure",
+            "title": "Extensive Damage and Outages",
+            "description": "Damage: 95% without power (restoration 5-10 days), 45% of roads blocked, 60,000+ homes damaged. 85% of gas stations can't pump (no power).",
+            "severity": "critical"
+          },
+          {
+            "id": "inject-9-3",
+            "time": "T+30h",
+            "type": "public_behavior",
+            "title": "Humanitarian Crisis Emerging",
+            "description": "People in damaged homes spent night cold, wet, scared. Sheltered people anxious to check homes. Food spoiling without power. Dialysis patients missing treatments. Elderly isolated, some not heard from. 15,000+ people displaced.",
+            "severity": "high"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-9-1",
+            "time": "T+24h",
+            "actionType": "public_announcement",
+            "details": "Curfew lifted but avoid travel - roads very hazardous. Boil water order for all county.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-9-2",
+            "time": "T+24h",
+            "actionType": "emergency_response",
+            "details": "320 people rescued from flooding. 1,500+ trees cleared from roads. 250+ treated for injuries.",
+            "targetPopulation": "Affected residents"
+          },
+          {
+            "id": "action-9-3",
+            "time": "T+26h",
+            "actionType": "resource_distribution",
+            "details": "Water/ice distribution at major parks (starts 8am-10am). Hot meals from Red Cross (noon). Medical triage tent opening. Current needs: 1.2 million need clean water, 500,000+ need food, 2,000+ need prescription refills.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 10,
+        "startTime": "T+36h",
+        "endTime": "T+48h",
+        "phase": "recovery",
+        "injects": [
+          {
+            "id": "inject-10-1",
+            "time": "T+36h",
+            "type": "infrastructure",
+            "title": "Power Restoration Beginning",
+            "description": "Power 15% restored, roads 60% cleared. 30% of gas stations operational (long lines, 2-3 hour waits).",
+            "severity": "high"
+          },
+          {
+            "id": "inject-10-2",
+            "time": "T+40h",
+            "type": "public_behavior",
+            "title": "Mixed Recovery Progress",
+            "description": "72,000 got power restored (relief). 85% still without power causing food loss, heat issues, batteries dying. People returning home devastated by damage. Displaced families stressed. Workers can't return to jobs (businesses closed). Elderly suffering heat exhaustion. Some missing medications.",
+            "severity": "high"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-10-1",
+            "time": "T+36h",
+            "actionType": "resource_distribution",
+            "details": "45,000 gallons water distributed. 12,000 hot meals served. More sites opening Saturday.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-10-2",
+            "time": "T+36h",
+            "actionType": "shelter",
+            "details": "6,400 people in shelters (1,700 went home to habitable houses).",
+            "targetPopulation": "Sheltered residents"
+          },
+          {
+            "id": "action-10-3",
+            "time": "T+36h",
+            "actionType": "public_announcement",
+            "details": "FEMA disaster assistance available. Register at DisasterAssistance.gov or call 1-800-621-3362.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 11,
+        "startTime": "T+48h",
+        "endTime": "T+60h",
+        "phase": "recovery",
+        "injects": [
+          {
+            "id": "inject-11-1",
+            "time": "T+48h",
+            "type": "infrastructure",
+            "title": "Infrastructure Coming Back Online",
+            "description": "Power 30% restored (full restoration 5-10 days). Airport reopening Sunday (limited flights). Businesses: 40% of groceries open (limited stock), 55% of pharmacies open, 50% of gas stations open.",
+            "severity": "medium"
+          },
+          {
+            "id": "inject-11-2",
+            "time": "T+52h",
+            "type": "public_behavior",
+            "title": "Economic Impact Mounting",
+            "description": "73,000 more got power. 70% still without power (frustration mounting). Families with kids struggling without AC. Small businesses calculating losses. Renters uncertain about repairs. Theme park workers no income for 5 days, financial stress.",
+            "severity": "high"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-11-1",
+            "time": "T+48h",
+            "actionType": "public_announcement",
+            "details": "Schools closed through Wednesday. Theme parks plan to reopen Monday/Tuesday. Debris collection starts Monday curbside.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-11-2",
+            "time": "T+48h",
+            "actionType": "shelter",
+            "details": "4,200 people in shelters (down from 6,400).",
+            "targetPopulation": "Sheltered residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 12,
+        "startTime": "T+60h",
+        "endTime": "T+72h",
+        "phase": "recovery",
+        "injects": [
+          {
+            "id": "inject-12-1",
+            "time": "T+60h",
+            "type": "infrastructure",
+            "title": "Continued Power Restoration",
+            "description": "Power 45% restored. Boil water order lifted for west county. Still in effect for east/central.",
+            "severity": "medium"
+          },
+          {
+            "id": "inject-12-2",
+            "time": "T+64h",
+            "type": "public_behavior",
+            "title": "Ongoing Hardship",
+            "description": "75,000 more got power. Majority still without power (exhaustion, heat stress). Working families spending weekend on cleanup. Some returning to work (income resuming). Displaced families in temporary housing. Kids bored, traumatized. Insurance: 125,000+ claims filed with long waits for adjusters.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-12-1",
+            "time": "T+60h",
+            "actionType": "shelter",
+            "details": "Shelters consolidating. 2,800 people remaining.",
+            "targetPopulation": "Sheltered residents"
+          },
+          {
+            "id": "action-12-2",
+            "time": "T+60h",
+            "actionType": "resource_distribution",
+            "details": "Community resource centers opening Sunday for FEMA help, food, water, counseling.",
+            "targetPopulation": "All residents"
+          }
+        ]
+      },
+      {
+        "periodNumber": 13,
+        "startTime": "T+72h",
+        "endTime": "T+84h",
+        "phase": "recovery",
+        "injects": [
+          {
+            "id": "inject-13-1",
+            "time": "T+72h",
+            "type": "infrastructure",
+            "title": "Major Infrastructure Recovery",
+            "description": "Power 60% restored (remaining outages in heavily damaged areas). All major roads open, most neighborhoods cleared.",
+            "severity": "medium"
+          },
+          {
+            "id": "inject-13-2",
+            "time": "T+76h",
+            "type": "public_behavior",
+            "title": "Long-term Recovery Challenges",
+            "description": "75,000 more got power. 60% recovering, 40% still desperate. Theme park workers returning to work Monday. Students anxious about school. Homeowners starting repairs, dealing with insurance. Renters seeking new housing. Community exhausted but helping neighbors.",
+            "severity": "medium"
+          }
+        ],
+        "eocActions": [
+          {
+            "id": "action-13-1",
+            "time": "T+72h",
+            "actionType": "public_announcement",
+            "details": "Boil water order still for east/central (lift expected Monday). Schools resume Thursday (damaged schools relocating students). Massive debris collection starts Monday (4-6 weeks for first pass). This is a months-long recovery process with help remaining available.",
+            "targetPopulation": "All residents"
+          },
+          {
+            "id": "action-13-2",
+            "time": "T+72h",
+            "actionType": "shelter",
+            "details": "1,900 people remaining in shelters.",
+            "targetPopulation": "Sheltered residents"
+          },
+          {
+            "id": "action-13-3",
+            "time": "T+72h",
+            "actionType": "resource_distribution",
+            "details": "FEMA: 52,000 households registered ($120 million in assistance).",
+            "targetPopulation": "All residents"
+          }
+        ]
+      }
+    ]
+  }
+}

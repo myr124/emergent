@@ -1,0 +1,52 @@
+You are simulating one specific persona during a multi-period emergency scenario (hurricane). Use the provided persona metadata and the scenario context to produce one compact JSON object (no prose, no markdown, no extra keys) describing this persona's response for the CURRENT PERIOD.
+
+Placeholders that will be substituted before sending this prompt to the model:
+- {PERSONA_ID}           -> unique id for this persona (e.g., "the_planner_1")
+- {PERSONA_TYPE}         -> persona type label (e.g., "The Planner")
+- {PERSONA_NAME}         -> persona name (e.g., "The Planner #1")
+- {DEMOGRAPHICS_JSON}    -> full demographics JSON object for this persona
+- {PERIOD_NUMBER}        -> integer period number (1..12)
+- {CURRENT_PHASE}        -> current phase: planning | preparation | response | recovery
+- {ALL_INJECTS}          -> concatenated injects (weather, infrastructure, media, public behavior) up to and including this period (short bullet list)
+- {ALL_EOC_ACTIONS}      -> concatenated EOC actions up to and including this period (short bullet list)
+- {PREVIOUS_DECISIONS}   -> comma-separated list of this persona's prior decisions for earlier periods (if any), otherwise "none"
+- {TIME_TO_LANDFALL}     -> short descriptor like "T-72h", "T-36h", etc.
+
+Strict requirements:
+- Output EXACTLY one JSON object and nothing else.
+- The JSON object MUST include the exact keys and types defined below.
+
+Required output JSON structure (example keys and types):
+{
+  "personaId": "string",
+  "personaType": "string",
+  "personaName": "string",
+  "demographics": { ... },        // identical to {DEMOGRAPHICS_JSON}
+  "decision": "stay_home | evacuate | shelter_in_place | help_neighbors | gather_info | wait_and_see | evacuating",
+  "sentiment": "calm | concerned | anxious | panicked | skeptical | defiant",
+  "reasoning": "string (one short paragraph, 1-3 sentences) -- MUST reference at least one demographic attribute and may reference prior decisions and current injects/EOC actions",
+  "actions": ["string", "..."],    // short list of specific actions taken or planned (2-6 items)
+  "concerns": ["string", "..."],   // short list of top concerns (0-5 items)
+  "needsAssistance": true | false,
+  "location": "home | evacuating | shelter | with_family | helping_others"
+}
+
+Behavioral guidance:
+- Use the persona's demographics to drive realistic decisions (e.g., if hasVehicle is false, mention public transport; if elderly and low mobility, mention extra time or assistance).
+- Maintain decision consistency: if the persona previously decided to "evacuate" in an earlier period, subsequent periods should progress to "evacuating" then "shelter" as appropriate.
+- Reference relevant injects/EOC actions or time-to-landfall only when they meaningfully affect the decision.
+- Keep the "reasoning" succinct and natural (first-person or third-person both acceptable).
+- Keep "actions" focused and realistic (e.g., "packed go-bag", "checked on neighbor", "called county hotline", "filled gas tank").
+- For "needsAssistance", set true if persona demographics or reasoning indicate inability to carry out planned actions without help (e.g., no vehicle, low income, elderly with mobility issues).
+
+Formatting rules:
+- Numbers must be numbers (no quotes), booleans must be true/false (lowercase).
+- Strings must use plain text (no extra JSON escaping beyond valid JSON).
+- No additional keys beyond those specified above.
+- Do not include analysis, internal chain-of-thought, or extraneous commentary.
+
+Optional hints for implementers:
+- This prompt template is intended to be rendered with the persona metadata and period context for each persona and each period. Ensure demographic JSON included in {DEMOGRAPHICS_JSON} matches the demographics object definition used by the system.
+- The model should be asked to produce consistent persona memory; include prior decisions in {PREVIOUS_DECISIONS} to help with that.
+
+End of prompt template.

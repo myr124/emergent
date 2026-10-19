@@ -1,0 +1,8 @@
+{
+  "lowincome": "low-income, high risk, socially connected",
+  "middleclass": "middle-class, low risk, socially average",
+  "retired": "retired, high risk, socially limited",
+  "underemployed": "under-employed, medium risk, socially connected",
+  "highincome": "high-income, medium risk, socially active",
+  "student": "student, low risk, socially connected"
+}

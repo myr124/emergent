@@ -1,0 +1,8 @@
+# Environment variables
+.env
+.env.*
+.venv/
+.pytest_cache/
+__pycache__/
+.python-version
+sessions.db
